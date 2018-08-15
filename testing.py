@@ -2,8 +2,10 @@ from urllib import request, parse
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 from typing import List
-from queue import Queue
+import queue
 import threading
+import time
+import logging
 import sqlite3
 
 CURSEFORGE_HOME = "https://minecraft.curseforge.com"
@@ -11,41 +13,61 @@ CURSEFORGE_URL = CURSEFORGE_HOME+"/mc-mods?%s"
 GAME_VERSION_1_12_2 = "2020709689:6756"
 NUMBER_WORKER_THREADS = 7
 GAME_VERSION = GAME_VERSION_1_12_2
-PAGE_QUEUE = Queue()
-RESULTS = Queue()
+PAGE_QUEUE = queue.Queue()
+RESULTS = queue.Queue()
 
 # TODO in future
 # get the urls. Each url then spawns a thread? Or a threadpool works through them.
 # Will have to see if bottleneck is bandwidth though
 # could get pages in parallel too
+#
+# UPDATE 15/8/18: pages for mod lists are now gotten in parallel, it's much faster
+# TODO - get more info: project id, source, issues, wiki, license, created, recent files? if I can get enough for maven that would be very nice
 
 
 class ModRecord:
 	...
 
 
-def main():
-	with open("data", "w"):
-		pass		# clear file
+def worker():
+	while True:
+		item = PAGE_QUEUE.get()
+		if item is None:
+			break
+		RESULTS.put(get_mod_info_list(item))
+		PAGE_QUEUE.task_done()
 
+
+def main():
+	a = time.time()
+
+	PAGE_QUEUE = queue.Queue()
 	threads = []
 	for i in range(NUMBER_WORKER_THREADS):
-		t = threading.Thread(target=worker_info_page())
+		t = threading.Thread(target=worker)
 		t.start()
 		threads.append(t)
 
-	for i in range(1 + 1):
+	for i in range(1, get_number_pages() + 1):
 		PAGE_QUEUE.put(i)
 
+	# block until all tasks are done
 	PAGE_QUEUE.join()
-
+	c = time.time()
+	# stop workers
 	for i in range(NUMBER_WORKER_THREADS):
 		PAGE_QUEUE.put(None)
 	for t in threads:
 		t.join()
 
-	while not RESULTS.empty():
-		print(RESULTS.get())
+	with open("data2", "w") as file:
+		while not RESULTS.empty():
+			list_ = RESULTS.get()
+			for i in list_:
+				file.write(i.__repr__() + "\n")
+			RESULTS.task_done()
+
+	print("took:", time.time() - a)
 
 
 def get_url(game_version: str = GAME_VERSION, page: int = 1) -> str:
@@ -102,27 +124,11 @@ def get_mod_info_list(page: int = 1, game_version: str = GAME_VERSION) -> List[M
 			description = mod_descriptor.find(class_="description").p.string
 
 			modrecord = ModRecord(name, name_link, author, author_link, download_count, updated, description)
+			# TODO - here would be where to call to get the page etc. Can then push to the queue from there hopefully
 
-			project_url = modrecord.project_url()
-
-			# with open("projectPages/" + modrecord.name, "w") as mod_file: TODO - implement once faster - get deps, project id, etc
-			# 	mod_file.write(BeautifulSoup(request.urlopen(project_url).read(), "lxml").prettify())
-
-			# with open("data", "a") as file:
-			# 	file.write(modrecord.__repr__() + "\n")
 			ret.append(modrecord)
 
 	return ret
-
-
-def worker_info_page():
-	while True:
-		page_number = PAGE_QUEUE.get()
-		if page_number is None:
-			break
-		RESULTS.put("page"+str(page_number) + " " + str(threading.get_ident()))
-		get_mod_info_list(page_number)
-		PAGE_QUEUE.task_done()
 
 
 class ModRecord:
