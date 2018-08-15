@@ -23,6 +23,9 @@ RESULTS = queue.Queue()
 #
 # UPDATE 15/8/18: pages for mod lists are now gotten in parallel, it's much faster
 # TODO - get more info: project id, source, issues, wiki, license, created, recent files? if I can get enough for maven that would be very nice
+# use pycurl or even shell for better performance?
+# logging
+# move to database (sqlite)
 
 
 class ModRecord:
@@ -93,8 +96,6 @@ def get_number_pages(game_version: str = GAME_VERSION) -> int:      # curseforge
 def get_mod_info_list(page: int = 1, game_version: str = GAME_VERSION) -> List[ModRecord]:
 	ret = []
 	print(str(page) + " " + str(threading.get_ident()))
-	if page == 177:
-		print("END OF THE LINE")
 	with request.urlopen(get_url(game_version, page)) as url:
 		raw_content = BeautifulSoup(url.read(), "lxml")
 		ul = raw_content.find(class_="listing listing-project project-listing")
