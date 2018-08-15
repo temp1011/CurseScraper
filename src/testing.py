@@ -41,7 +41,6 @@ def worker():
 def main():
 	a = time.time()
 
-	PAGE_QUEUE = queue.Queue()
 	threads = []
 	for i in range(NUMBER_WORKER_THREADS):
 		t = threading.Thread(target=worker)
