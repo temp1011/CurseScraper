@@ -21,7 +21,7 @@ RESULTS = queue.Queue()
 # Will have to see if bottleneck is bandwidth though
 # could get pages in parallel too
 #
-# UPDATE 15/8/18: pages for mod lists are now gotten in parallel, it's much faster
+# UPDATE 15/8/18: pages for mod lists are now gotten in parallel, it's much faster (took: 40.55830955505371)
 # TODO - get more info: project id, source, issues, wiki, license, created, recent files? if I can get enough for maven that would be very nice
 # use pycurl or even shell for better performance?
 # logging
