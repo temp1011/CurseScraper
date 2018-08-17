@@ -29,7 +29,7 @@ RESULTS = queue.Queue()
 # use pycurl or even shell for better performance?
 # logging
 # move to database (sqlite)
-# get web content async (and possibly cache it too!)
+# TODO - maybe - get web content async (and possibly cache it too!)
 
 class ModRecord:
 	...
@@ -102,14 +102,14 @@ def get_mod_info_list(page: int = 1, game_version: str = GAME_VERSION) -> List[M
 	print("page", page, threading.get_ident())
 	with request.urlopen(get_url(game_version, page)) as url:
 		raw_content = BeautifulSoup(url.read(), "lxml")
-		ul = raw_content.find(class_="listing listing-project project-listing")
+		ul = raw_content.find("ul", class_="listing listing-project project-listing")
 		for li in ul.children:
 			if isinstance(li, NavigableString):
 				continue
-			mod_descriptor = li.find(class_="details")
+			mod_descriptor = li.find("div", class_="details")
 
 			# name and author
-			info_name = mod_descriptor.find(class_="info name")
+			info_name = mod_descriptor.find("div", class_="info name")
 
 			name_tab = info_name.div.a
 			name = name_tab.string
@@ -120,12 +120,12 @@ def get_mod_info_list(page: int = 1, game_version: str = GAME_VERSION) -> List[M
 			author_link = author_tab.get("href")
 
 			# stats
-			stats_tab = mod_descriptor.find(class_="info stats")
-			download_count = stats_tab.find(class_="e-download-count").string.replace(",", "")
-			updated = stats_tab.find(class_="e-update-date").abbr.get("data-epoch")
+			stats_tab = mod_descriptor.find("div", class_="info stats")
+			download_count = stats_tab.find("p", class_="e-download-count").string.replace(",", "")
+			updated = stats_tab.find("p", class_="e-update-date").abbr.get("data-epoch")
 
 			# description
-			description = mod_descriptor.find(class_="description").p.string
+			description = mod_descriptor.find("div", class_="description").p.string
 
 			modrecord = ModRecord(name, name_link, author, author_link, download_count, updated, description)
 			scrape_mod_page(modrecord)
@@ -190,8 +190,8 @@ class ModRecord:
 		ret += self._name_link + " "
 		ret += self._author + " "
 		ret += self._author_link + " "
-		ret += repr(self._download_count) + " "
-		ret += repr(self._updated) + " "
+		ret += self._download_count + " "
+		ret += self._updated + " "
 		ret += self._description + " "
 		ret += str(self._wiki_link) + " "
 		ret += str(self._issues_link) + " "
