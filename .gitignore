@@ -3,6 +3,7 @@
 
 #folders
 !/src
+!/new_src
 
 #files
 !/.gitignore

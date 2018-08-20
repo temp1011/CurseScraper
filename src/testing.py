@@ -58,12 +58,11 @@ def main():
 
 	# block until all tasks are done
 	PAGE_QUEUE.join()
-	c = time.time()
 	# stop workers
 	for i in range(NUMBER_WORKER_THREADS):
 		PAGE_QUEUE.put(None)
 	for t in threads:
-		t.join()
+		t.join(timeout=10)
 
 	with open("data2", "w") as file:
 		while not RESULTS.empty():
