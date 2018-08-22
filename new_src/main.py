@@ -3,10 +3,12 @@ import sqlite3
 
 from new_src import downloads_all
 
-NUMBER_DOWNLOADER_THREADS = 179
+NUMBER_DOWNLOADER_PROCESSES = 179
 NUMBER_PARSER_PROCESSES = 30
 
 
+# TODO - config, logging, running from a terminal
+# configs - number of processes for both, whether to download or load from disk, game version, cache timeout (or not)
 def main():
 	a = time.time()
 	print(a)
@@ -18,7 +20,7 @@ def main():
 		(id INTEGER, accessed INTEGER, link_extension TEXT, 
 		source TEXT, issues TEXT, wiki TEXT, license_link TEXT, license TEXT)""")
 
-	b = downloads_all.init_input_queue(NUMBER_DOWNLOADER_THREADS)
+	b = downloads_all.init_input_queue(NUMBER_DOWNLOADER_PROCESSES)
 	print("found", len(b), "mods to use")
 	d = downloads_all.scrape_results(b, NUMBER_PARSER_PROCESSES)
 	print("everything scraped")

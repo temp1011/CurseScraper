@@ -5,7 +5,6 @@ from typing import List
 from urllib import request, parse
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
-import threading
 
 from new_src import parse_all
 
@@ -92,7 +91,7 @@ def get_content(ext: str):  # TODO - handle exceptions here eg - timeouts
 		return None
 
 
-class ModRecord:
+class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 	__slots__ = ("_project_id",
 	             "_wiki_link",
 	             "_issues_link",
