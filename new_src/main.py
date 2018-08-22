@@ -11,15 +11,11 @@ NUMBER_PARSER_PROCESSES = 30
 # configs - number of processes for both, whether to download or load from disk, game version, cache timeout (or not)
 def main():
 	a = time.time()
-	print(a)
-	conn = sqlite3.connect("mods.db")
+	conn = sqlite3.connect("../mods.db")
 	c = conn.cursor()
-	c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='mods';")
-	if c.fetchone() is None:
-		c.execute("""CREATE TABLE mods 
-		(id INTEGER, accessed INTEGER, link_extension TEXT, 
+	c.execute("""CREATE TABLE IF NOT EXISTS mods 
+		(id INTEGER PRIMARY KEY, accessed INTEGER, link_extension TEXT, 
 		source TEXT, issues TEXT, wiki TEXT, license_link TEXT, license TEXT)""")
-
 	b = downloads_all.init_input_queue(NUMBER_DOWNLOADER_PROCESSES)
 	print("found", len(b), "mods to use")
 	d = downloads_all.scrape_results(b, NUMBER_PARSER_PROCESSES)
