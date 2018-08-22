@@ -1,9 +1,8 @@
 /*
 
-#folders
 !/src
 !/new_src
+/new_src/__pycache__
 
-#files
 !/.gitignore
 !/LICENSE
