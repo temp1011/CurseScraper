@@ -1,69 +1,32 @@
-# this is the thing that starts everything
-import concurrent.futures
-import multiprocessing
 import time
-import threading
+import sqlite3
 
-from new_src import downloads_all, parse_all
+from new_src import downloads_all
 
-NUMBER_DOWNLOADER_THREADS = 30
-NUMBER_PARSER_PROCESSES = 7
+NUMBER_DOWNLOADER_THREADS = 179
+NUMBER_PARSER_PROCESSES = 30
 
-
-# def main():             # maybe I should just immediately move to cache based model...
-# 	a = time.time()     # but startup should still be reasonable fast...
-#
-# 	downloads_all.init_input_queue()
-#
-# 	threads = []
-# 	for i in range(NUMBER_DOWNLOADER_THREADS):
-# 		t = threading.Thread(target=downloads_all.worker)
-# 		t.start()
-# 		threads.append(t)
-# 	downloads_all.INPUTS.join()
-# 	downloads_all.TO_PROCESS.join()
-# 	for i in range(NUMBER_DOWNLOADER_THREADS):
-# 		downloads_all.TO_PROCESS.put(None)
-# 	for t in threads:
-# 		t.join()
-# 	print("everything has finished downloading!")
-#
-# 	processes = []
-# 	for i in range(NUMBER_PARSER_PROCESSES):
-# 		p = multiprocessing.Process(target=parse_all.scrape_file_in_results, args=(parse_all.inputs,))
-# 		p.start()
-# 		processes.append(p)
-#
-# 	parse_all.inputs.join()     # processes should close themselves if queue is empty
-# 	print("all inputs used")
-# 	for p in processes:
-# 		p.join()
-#
-# 	print("finished parsing, IO time")
-#
-# 	print("took:", time.time() - a)
 
 def main():
 	a = time.time()
+	print(a)
+	conn = sqlite3.connect("mods.db")
+	c = conn.cursor()
+	c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='mods';")
+	if c.fetchone() is None:
+		c.execute("""CREATE TABLE mods 
+		(id INTEGER, accessed INTEGER, link_extension TEXT, 
+		source TEXT, issues TEXT, wiki TEXT, license_link TEXT, license TEXT)""")
 
-	b = downloads_all.init_input_queue()
+	b = downloads_all.init_input_queue(NUMBER_DOWNLOADER_THREADS)
 	print("found", len(b), "mods to use")
-	downloads_all.scrape_results(b)
+	d = downloads_all.scrape_results(b, NUMBER_PARSER_PROCESSES)
+	print("everything scraped")
+	for mod_record in d:
+		c.execute("INSERT INTO mods VALUES (?,?,?,?,?,?,?,?)", mod_record.as_tuple())
+	conn.commit()
+	c.close()
 	print(time.time() - a)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":

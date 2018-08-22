@@ -1,5 +1,6 @@
 # get all the html off the internet into memory
 import concurrent.futures
+import time
 from typing import List
 from urllib import request, parse
 from bs4 import BeautifulSoup
@@ -14,10 +15,11 @@ GAME_VERSION_1_12_2 = "2020709689:6756"
 GAME_VERSION = GAME_VERSION_1_12_2
 
 
-def init_input_queue() -> List[str]:    # for me, as many processes as possible gives a very fast result
+def init_input_queue(number_downloader_threads: int = 0) -> List[str]:    # for me, as many processes as possible gives a very fast result
 	ret = []
 	number_pages = get_number_pages()
-	with concurrent.futures.ProcessPoolExecutor(max_workers=number_pages) as executor:  # uses a lot of memory but fast
+	workers = number_downloader_threads if number_downloader_threads != 0 else number_pages
+	with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:  # uses a lot of memory but fast
 		project_ids = {executor.submit(get_project_ids, i): i for i in range(1, number_pages + 1)}
 		for future in concurrent.futures.as_completed(project_ids):
 			ret.extend(future.result())
@@ -25,12 +27,16 @@ def init_input_queue() -> List[str]:    # for me, as many processes as possible 
 	return ret
 
 
-def scrape_results(exts: List[str]):
-	with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor:  # uses a lot of memory but fast it seems on linux more processes == more memory == faster
-		with concurrent.futures.ProcessPoolExecutor(max_workers=100) as executor2:
-			pages = {executor.submit(get_content, i): i for i in exts}
-			for future in concurrent.futures.as_completed(pages):
-				pass
+def scrape_results(exts: List[str], NUMBER_PARSER_PROCESSES: int = 0):
+	ret = []
+	workers = NUMBER_PARSER_PROCESSES if NUMBER_PARSER_PROCESSES != 0 else 30
+	with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:  #  uses a lot of memory but fast it seems on linux more processes == more memory == faster
+		pages = {executor.submit(get_content, i): i for i in exts}            #  maybe due to unix using os.fork(). Not sure how this compares to windows
+		for future in concurrent.futures.as_completed(pages):
+			f = future.result()
+			if f is not None:
+				ret.append(f)
+	return ret
 
 
 def get_url(game_version: str = GAME_VERSION, page: int = 1) -> str:
@@ -57,9 +63,9 @@ def get_number_pages(game_version: str = GAME_VERSION) -> int:  # curseforge giv
 
 
 def get_project_ids(page: int, game_version: str = GAME_VERSION):
-	print("page", page, threading.get_ident())
+	print("page", page)
 	foundIDs = []
-	with request.urlopen(get_url(game_version, page), timeout=10) as url:
+	with request.urlopen(get_url(game_version, page)) as url:
 		raw_content = BeautifulSoup(url.read(), "lxml")
 		ul = raw_content.find("ul", class_="listing listing-project project-listing")
 		for li in ul.children:
@@ -77,51 +83,37 @@ def get_project_ids(page: int, game_version: str = GAME_VERSION):
 
 def get_content(ext: str):  # TODO - handle exceptions here eg - timeouts
 	print("downloading: ", ext)
-	with request.urlopen(CURSEFORGE_HOME + ext, timeout=10) as raw:
-		parse_all.scrape_file_in_results(raw.read())
+	try:
+		with request.urlopen(CURSEFORGE_HOME + ext, timeout=30) as raw:
+			return parse_all.scrape_file_in_results(raw.read(), ext)
+	except Exception as e:
+		print(e.__repr__())
+		print("something went wrong")
+		return None
 
 
 class ModRecord:
 	__slots__ = ("_project_id",
-	             "_name",
-	             "_name_link",
-	             "_author",
-	             "_author_link",
-	             "_download_count",
-	             "_updated",
-	             "_description",
 	             "_wiki_link",
 	             "_issues_link",
 	             "_source_link",
 	             "_license_link",
+	             "_name_link",
 	             "_license")
 
-	def __init__(self, name: str, name_link: str, author: str, author_link: str, download_count: int, updated: int,
-	             description: str):
+	def __init__(self):
 		self._project_id = None
-		self._name = name
-		self._name_link = name_link
-		self._author = author
-		self._author_link = author_link
-		self._download_count = download_count
-		self._updated = updated
-		self._description = description
 		self._wiki_link = None
 		self._issues_link = None
 		self._source_link = None
 		self._license_link = None
 		self._license = None
+		self._name_link = None
 
 	def __repr__(self) -> str:
 		ret = ""
-		ret += str(self._project_id) if self._project_id is not None else ""
-		ret += self._name + " "
-		ret += self._name_link + " "
-		ret += self._author + " "
-		ret += self._author_link + " "
-		ret += str(self._download_count) + " "
-		ret += str(self._updated) + " "
-		ret += self._description + " "
+		ret += str(self._name_link) + " "
+		ret += str(self._project_id) + " "
 		ret += str(self._wiki_link) + " "
 		ret += str(self._issues_link) + " "
 		ret += str(self._source_link) + " "
@@ -147,6 +139,8 @@ class ModRecord:
 	def set_project_id(self, id):
 		self._project_id = id
 
-	def project_url(self) -> str:
-		return CURSEFORGE_HOME + self._name_link
+	def set_name_link(self, name_link):
+		self._name_link = name_link
 
+	def as_tuple(self): # TODO - perhaps there is a better way to do this, also maybe set accessed time?
+		return self._project_id, int(time.time()), self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license_link, self._license
