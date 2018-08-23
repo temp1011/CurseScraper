@@ -1,7 +1,7 @@
 # parse the html to get the data out
 import multiprocessing
 from bs4 import BeautifulSoup
-from new_src import downloads_all
+from src import downloads_all
 
 results = multiprocessing.JoinableQueue()
 inputs = multiprocessing.JoinableQueue()

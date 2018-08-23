@@ -1,5 +1,6 @@
 # get all the html off the internet into memory
 import concurrent.futures
+import os
 import sqlite3
 import time
 from typing import List
@@ -7,7 +8,7 @@ from urllib import request, parse
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
-from new_src import parse_all, main
+from src import parse_all, main
 
 CURSEFORGE_HOME = "https://minecraft.curseforge.com"
 CURSEFORGE_URL = CURSEFORGE_HOME + "/mc-mods?%s"
@@ -80,17 +81,18 @@ def get_project_links(page: int, game_version: str = GAME_VERSION):
 
 			name_tab = info_name.div.a
 			name_link = name_tab.get("href")
-			d = cursor.execute("SELECT id, accessed FROM mods WHERE link_extension=? LIMIT 1", (name_link,))    # does this cause performance issues? or does the database handle multiple reads fine?
-			found_link = d.fetchone()
+			found_link = cursor.execute("SELECT id, accessed FROM mods WHERE link_extension=? LIMIT 1", (name_link,)).fetchone()    # does this cause performance issues? or does the database handle multiple reads fine?
+
 			if not found_link:
 				foundIDs.append(name_link)
 				print("added mod %s" % name_link)
 			else:
-				if int(time.time()) - found_link[1] < main.CACHE_TIMEOUT:
+				if int(time.time()) - found_link[1] > main.CACHE_TIMEOUT:
 					print("cache expired on %s" % name_link)
 					foundIDs.append(name_link)
 				else:
 					print("ignoring ID already in db %d" % found_link[0])
+	cursor.close()
 	connection.close()
 	return foundIDs
 
@@ -105,6 +107,10 @@ def get_content(ext: str):  # TODO - handle exceptions here eg - timeouts
 		print("something went wrong")
 		return None
 
+
+def save_file(raw_mod_page: str, ext: str):
+	with open(os.getcwd()+"/saved_html/"+ext.replace("/", "").replace("projects", ""), "w") as f:
+		f.write(BeautifulSoup(raw_mod_page, "lxml").prettify())
 
 class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 	__slots__ = ("_project_id",

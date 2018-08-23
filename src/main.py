@@ -1,9 +1,9 @@
 import time
 import sqlite3
 
-from new_src import downloads_all
+from src import downloads_all
 
-NUMBER_DOWNLOADER_PROCESSES = 20
+NUMBER_DOWNLOADER_PROCESSES = 10
 NUMBER_PARSER_PROCESSES = 30
 CACHE_TIMEOUT = 60 * 30     # for testing, a 30 minute cache timeout should be good
 
@@ -17,15 +17,16 @@ def main():
 	c.execute("""CREATE TABLE IF NOT EXISTS mods 
 		(id INTEGER PRIMARY KEY, accessed INTEGER, link_extension TEXT, 
 		source TEXT, issues TEXT, wiki TEXT, license_link TEXT, license TEXT)""")
-	b = downloads_all.init_input_queue(NUMBER_DOWNLOADER_PROCESSES)
-	print("found", len(b), "mods to use")
-	d = downloads_all.scrape_results(b, NUMBER_PARSER_PROCESSES)
+	found_links = downloads_all.init_input_queue(NUMBER_DOWNLOADER_PROCESSES)
+	print("found", len(found_links), "mods to use")
+	scraped_data = downloads_all.scrape_results(found_links, NUMBER_PARSER_PROCESSES)
 	print("everything scraped")
-	for mod_record in d:
+	for mod_record in scraped_data:
 		c.execute("DELETE FROM mods WHERE id = ?", (mod_record.get_project_id(),))  # does this cause performance issues?
 		c.execute("INSERT INTO mods VALUES (?,?,?,?,?,?,?,?)", mod_record.as_tuple())
 	conn.commit()
 	c.close()
+	conn.close()
 	print("completed in: ", time.time() - start)
 
 
