@@ -1,12 +1,13 @@
 # get all the html off the internet into memory
 import concurrent.futures
+import sqlite3
 import time
 from typing import List
 from urllib import request, parse
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
-from new_src import parse_all
+from new_src import parse_all, main
 
 CURSEFORGE_HOME = "https://minecraft.curseforge.com"
 CURSEFORGE_URL = CURSEFORGE_HOME + "/mc-mods?%s"
@@ -19,7 +20,7 @@ def init_input_queue(number_downloader_threads: int = 0) -> List[str]:    # for 
 	number_pages = get_number_pages()
 	workers = number_downloader_threads if number_downloader_threads != 0 else number_pages
 	with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:  # uses a lot of memory but fast
-		project_ids = {executor.submit(get_project_ids, i): i for i in range(1, number_pages + 1)}
+		project_ids = {executor.submit(get_project_links, i): i for i in range(1, number_pages + 1)}
 		for future in concurrent.futures.as_completed(project_ids):
 			ret.extend(future.result())
 	print("no tasks left to do")
@@ -61,7 +62,9 @@ def get_number_pages(game_version: str = GAME_VERSION) -> int:  # curseforge giv
 	return highest
 
 
-def get_project_ids(page: int, game_version: str = GAME_VERSION):
+def get_project_links(page: int, game_version: str = GAME_VERSION):
+	connection = sqlite3.connect("../mods.db")
+	cursor = connection.cursor()
 	print("page", page)
 	foundIDs = []
 	with request.urlopen(get_url(game_version, page)) as url:
@@ -76,7 +79,19 @@ def get_project_ids(page: int, game_version: str = GAME_VERSION):
 			info_name = mod_descriptor.find("div", class_="info name")
 
 			name_tab = info_name.div.a
-			foundIDs.append(name_tab.get("href"))
+			name_link = name_tab.get("href")
+			d = cursor.execute("SELECT id, accessed FROM mods WHERE link_extension=? LIMIT 1", (name_link,))    # does this cause performance issues? or does the database handle multiple reads fine?
+			found_link = d.fetchone()
+			if not found_link:
+				foundIDs.append(name_link)
+				print("added mod %s" % name_link)
+			else:
+				if int(time.time()) - found_link[1] < main.CACHE_TIMEOUT:
+					print("cache expired on %s" % name_link)
+					foundIDs.append(name_link)
+				else:
+					print("ignoring ID already in db %d" % found_link[0])
+	connection.close()
 	return foundIDs
 
 
@@ -140,6 +155,9 @@ class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 
 	def set_name_link(self, name_link):
 		self._name_link = name_link
+
+	def get_project_id(self):
+		return self._project_id
 
 	def as_tuple(self): # TODO - perhaps there is a better way to do this, also maybe set accessed time?
 		return self._project_id, int(time.time()), self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license_link, self._license
