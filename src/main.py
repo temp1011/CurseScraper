@@ -1,7 +1,7 @@
 import time
 import sqlite3
 
-from src import downloads_all
+import downloads_all
 
 NUMBER_DOWNLOADER_PROCESSES = 10
 NUMBER_PARSER_PROCESSES = 30

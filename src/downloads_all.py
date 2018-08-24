@@ -8,7 +8,8 @@ from urllib import request, parse
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
-from src import parse_all, main
+import parse_all
+import main
 
 CURSEFORGE_HOME = "https://minecraft.curseforge.com"
 CURSEFORGE_URL = CURSEFORGE_HOME + "/mc-mods?%s"
