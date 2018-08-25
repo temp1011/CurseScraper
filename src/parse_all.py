@@ -1,13 +1,9 @@
 # parse the html to get the data out
-import multiprocessing
 from bs4 import BeautifulSoup
 import downloads_all
 
-results = multiprocessing.JoinableQueue()
-inputs = multiprocessing.JoinableQueue()
 
-
-def scrape_file_in_results(raw, ext):   # TODO - include accessed variable (epoch seconds maybe?) for caching
+def scrape_file_in_results(raw, ext):
 	raw_content = BeautifulSoup(raw, "lxml")
 	ret = downloads_all.ModRecord()
 	for header in raw_content.find("ul", class_="e-menu").find_all("a", class_="external-link"):
@@ -24,7 +20,11 @@ def scrape_file_in_results(raw, ext):   # TODO - include accessed variable (epoc
 	side_bar = raw_content.find("ul", class_="cf-details project-details")
 	license_stuff = side_bar.find("a")
 	ret.set_license_link(license_stuff.get("href"))
-	ret.set_license(license_stuff.string.strip() if license_stuff.string is not None else None) # TODO - there can be a a link here, find that too. eg - see https://minecraft.curseforge.com/projects/default-lan-port which has a span inside
+	if license_stuff.string:    # TODO u-tooltips-a has full license https://minecraft.curseforge.com/projects/default-lan-port
+		license_string = license_stuff.string.strip()
+	else:
+		license_string = license_stuff.span.string.strip()
+	ret.set_license(license_string)
 	ret.set_project_id(int(side_bar.contents[1].contents[3].string))    # TODO - try and make this a little less order dependant
 	ret.set_name_link(ext)
 	return ret

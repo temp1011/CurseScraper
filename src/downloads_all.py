@@ -9,19 +9,17 @@ from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
 import parse_all
-import main
+from configuration import CONFIG
 
 CURSEFORGE_HOME = "https://minecraft.curseforge.com"
 CURSEFORGE_URL = CURSEFORGE_HOME + "/mc-mods?%s"
-GAME_VERSION_1_12_2 = "2020709689:6756"
-GAME_VERSION = GAME_VERSION_1_12_2
+GAME_VERSION = CONFIG.get("game_version")
 
 
 def init_input_queue(number_downloader_threads: int = 0) -> List[str]:    # for me, as many processes as possible gives a very fast result
 	ret = []
 	number_pages = get_number_pages()
-	workers = number_downloader_threads if number_downloader_threads != 0 else number_pages
-	with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:  # uses a lot of memory but fast
+	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:  # uses a lot of memory but fast
 		project_ids = {executor.submit(get_project_links, i): i for i in range(1, number_pages + 1)}
 		for future in concurrent.futures.as_completed(project_ids):
 			ret.extend(future.result())
@@ -29,10 +27,9 @@ def init_input_queue(number_downloader_threads: int = 0) -> List[str]:    # for 
 	return ret
 
 
-def scrape_results(exts: List[str], NUMBER_PARSER_PROCESSES: int = 0):
+def scrape_results(exts: List[str], number_parser_processes: int):
 	ret = []
-	workers = NUMBER_PARSER_PROCESSES if NUMBER_PARSER_PROCESSES != 0 else 30
-	with concurrent.futures.ProcessPoolExecutor(max_workers=workers) as executor:  #  uses a lot of memory but fast it seems on linux more processes == more memory == faster
+	with concurrent.futures.ProcessPoolExecutor(max_workers=number_parser_processes) as executor:  #  uses a lot of memory but fast it seems on linux more processes == more memory == faster
 		pages = {executor.submit(get_content, i): i for i in exts}            #  maybe due to unix using os.fork(). Not sure how this compares to windows
 		for future in concurrent.futures.as_completed(pages):
 			f = future.result()
@@ -88,7 +85,7 @@ def get_project_links(page: int, game_version: str = GAME_VERSION):
 				foundIDs.append(name_link)
 				print("added mod %s" % name_link)
 			else:
-				if int(time.time()) - found_link[1] > main.CACHE_TIMEOUT:
+				if int(time.time()) - found_link[1] > CONFIG.get("cache_timeout"):
 					print("cache expired on %s" % name_link)
 					foundIDs.append(name_link)
 				else:
@@ -105,13 +102,14 @@ def get_content(ext: str):  # TODO - handle exceptions here eg - timeouts
 			return parse_all.scrape_file_in_results(raw.read(), ext)
 	except Exception as e:
 		print(e.__repr__())
-		print("something went wrong")
+		print("something went wrong for", ext)
 		return None
 
 
 def save_file(raw_mod_page: str, ext: str):
 	with open(os.getcwd()+"/saved_html/"+ext.replace("/", "").replace("projects", ""), "w") as f:
 		f.write(BeautifulSoup(raw_mod_page, "lxml").prettify())
+
 
 class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 	__slots__ = ("_project_id",
