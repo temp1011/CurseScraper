@@ -47,7 +47,7 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 		self.values["cache_timeout"] = int(cache["timeout"])
 
 		curseforge = config["curseforge"]
-		self.values["game_version"] = curseforge["game_version"]
+		self.values["game_version"] = curseforge["game version"]
 
 		db = config["db"]
 		self.values["db_location"] = db["location"]
