@@ -1,7 +1,13 @@
 import configparser
+import os
 from pathlib import Path
 
-CONFIG_FILE = "../config.ini"
+
+def absolute_path(relative_path):
+	return os.path.dirname(os.path.abspath(__file__)) + "/" + relative_path
+
+
+CONFIG_FILE = absolute_path("/../config.ini")
 
 
 class Config:  # In theory these could be a dict but setting/accessing things globally in python is rather messy
@@ -22,14 +28,14 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 			"timeout": 3600
 		}
 
-		config["curseforge"] = { # TODO - support for games other than minecraft?
+		config["curseforge"] = {  # TODO - support for games other than minecraft?
 			"# can be found in curseforge url for mods listing": None,
 			"game version": "2020709689:6756"
 		}
 
-		config["db"] = {    # TODO check what happens when running from random places
-			"# can be relative to current dir": None,
-			"location": "../mods.db"
+		config["db"] = {
+			"# relative to the source files": None,
+			"location": "/../mods.db"
 		}
 		with open(CONFIG_FILE, "w") as configfile:
 			config.write(configfile)
@@ -50,7 +56,7 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 		self.values["game_version"] = curseforge["game version"]
 
 		db = config["db"]
-		self.values["db_location"] = db["location"]
+		self.values["db_location"] = absolute_path(db["location"])
 
 	def get(self, param):
 		return self.values[param]

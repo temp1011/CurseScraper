@@ -62,7 +62,7 @@ def get_number_pages(game_version: str = GAME_VERSION) -> int:  # curseforge giv
 
 
 def get_project_links(page: int, game_version: str = GAME_VERSION):
-	connection = sqlite3.connect("../mods.db")
+	connection = sqlite3.connect(CONFIG.get("db_location"))
 	cursor = connection.cursor()
 	print("page", page)
 	foundIDs = []
