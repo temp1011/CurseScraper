@@ -20,11 +20,14 @@ def scrape_file_in_results(raw, ext):
 	side_bar = raw_content.find("ul", class_="cf-details project-details")
 	license_stuff = side_bar.find("a")
 	ret.set_license_link(license_stuff.get("href"))
-	if license_stuff.string:    # TODO u-tooltips-a has full license https://minecraft.curseforge.com/projects/default-lan-port
-		license_string = license_stuff.string.strip()
-	else:
-		license_string = license_stuff.span.string.strip()
-	ret.set_license(license_string)
-	ret.set_project_id(int(side_bar.contents[1].contents[3].string))    # TODO - try and make this a little less order dependant
+	ret.set_license(get_license_string(license_stuff))
+	ret.set_project_id(int(side_bar.contents[1].contents[3].string))  # TODO - try and make this a little less order dependant
 	ret.set_name_link(ext)
 	return ret
+
+
+def get_license_string(license_stuff):
+	if license_stuff.string:
+		return license_stuff.string.strip()
+	else:
+		return license_stuff.span.get("title")
