@@ -7,7 +7,7 @@ def absolute_path(relative_path):
 	return os.path.dirname(os.path.abspath(__file__)) + "/" + relative_path
 
 
-CONFIG_FILE = absolute_path("/../config.ini")
+CONFIG_FILE = absolute_path("../config.ini")
 
 
 class Config:  # In theory these could be a dict but setting/accessing things globally in python is rather messy
@@ -35,7 +35,13 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 
 		config["db"] = {
 			"# relative to the source files": None,
-			"location": "/../mods.db"
+			"location": "../mods.db"
+		}
+
+		config["logging"] = {
+			"location": "../scraper.log",
+			"print to stdout": True,
+			"log level": "debug"
 		}
 		with open(CONFIG_FILE, "w") as configfile:
 			config.write(configfile)
@@ -57,6 +63,11 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 
 		db = config["db"]
 		self.values["db_location"] = absolute_path(db["location"])
+
+		log = config["logging"]
+		self.values["log_location"] = absolute_path(log["location"])
+		self.values["log_use_stdout"] = log["print to stdout"]
+		self.values["log_level"] = log["log level"]
 
 	def get(self, param):
 		return self.values[param]

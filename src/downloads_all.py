@@ -7,30 +7,29 @@ from typing import List
 from urllib import request, parse
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
-
 import parse_all
 from configuration import CONFIG
+import logging
 
 CURSEFORGE_HOME = "https://minecraft.curseforge.com"
 CURSEFORGE_URL = CURSEFORGE_HOME + "/mc-mods?%s"
 GAME_VERSION = CONFIG.get("game_version")
 
 
-def init_input_queue(number_downloader_threads: int = 0) -> List[str]:    # for me, as many processes as possible gives a very fast result
+def init_input_queue(number_downloader_threads: int = 0) -> List[str]:
 	ret = []
 	number_pages = get_number_pages()
-	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:  # uses a lot of memory but fast
+	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:
 		project_ids = {executor.submit(get_project_links, i): i for i in range(1, number_pages + 1)}
 		for future in concurrent.futures.as_completed(project_ids):
 			ret.extend(future.result())
-	print("no tasks left to do")
 	return ret
 
 
 def scrape_results(exts: List[str], number_parser_processes: int):
 	ret = []
-	with concurrent.futures.ProcessPoolExecutor(max_workers=number_parser_processes) as executor:  #  uses a lot of memory but fast it seems on linux more processes == more memory == faster
-		pages = {executor.submit(get_content, i): i for i in exts}            #  maybe due to unix using os.fork(). Not sure how this compares to windows
+	with concurrent.futures.ProcessPoolExecutor(max_workers=number_parser_processes) as executor:
+		pages = {executor.submit(get_content, i): i for i in exts}
 		for future in concurrent.futures.as_completed(pages):
 			f = future.result()
 			if f is not None:
@@ -64,7 +63,7 @@ def get_number_pages(game_version: str = GAME_VERSION) -> int:  # curseforge giv
 def get_project_links(page: int, game_version: str = GAME_VERSION):
 	connection = sqlite3.connect(CONFIG.get("db_location"))
 	cursor = connection.cursor()
-	print("page", page)
+	logging.debug("page %d" % page)
 	foundIDs = []
 	with request.urlopen(get_url(game_version, page)) as url:
 		raw_content = BeautifulSoup(url.read(), "lxml")
@@ -83,26 +82,26 @@ def get_project_links(page: int, game_version: str = GAME_VERSION):
 
 			if not found_link:
 				foundIDs.append(name_link)
-				print("added mod %s" % name_link)
+				logging.debug("added mod %s" % name_link)
 			else:
 				if int(time.time()) - found_link[1] > CONFIG.get("cache_timeout"):
-					print("cache expired on %s" % name_link)
+					logging.debug("cache expired on %s" % name_link)
 					foundIDs.append(name_link)
 				else:
-					print("ignoring ID already in db %d" % found_link[0])
+					logging.debug("ignoring ID already in db %d" % found_link[0])
 	cursor.close()
 	connection.close()
 	return foundIDs
 
 
 def get_content(ext: str):  # TODO - handle exceptions here eg - timeouts
-	print("downloading: ", ext)
+	logging.debug("downloading: ", ext)
 	try:
 		with request.urlopen(CURSEFORGE_HOME + ext, timeout=30) as raw:
 			return parse_all.scrape_file_in_results(raw.read(), ext)
 	except Exception as e:
-		print(e.__repr__())
-		print("something went wrong for", ext)
+		logging.error(e.__repr__())
+		logging.error("something went wrong for", ext)
 		return None
 
 
