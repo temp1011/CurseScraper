@@ -106,7 +106,7 @@ def get_content(ext: str):  # TODO - handle exceptions here eg - timeouts
 
 
 def save_file(raw_mod_page: str, ext: str):
-	with open(os.getcwd()+"/saved_html/"+ext.replace("/", "").replace("projects", ""), "w") as f:
+	with open(os.getcwd()+ext.replace("/", "").replace("projects", ""), "w") as f:
 		f.write(BeautifulSoup(raw_mod_page, "lxml").prettify())
 
 
@@ -162,6 +162,10 @@ class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 
 	def get_project_id(self):
 		return self._project_id
+
+	def test_form(self):    # don't use accessed time for test cases
+		return self._project_id, self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license_link, self._license
+
 
 	def as_tuple(self): # TODO - perhaps there is a better way to do this, also maybe set accessed time?
 		return self._project_id, int(time.time()), self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license_link, self._license

@@ -2,6 +2,7 @@
 
 !/src
 /src/__pycache__
+!/test
 
 !/.gitignore
 !/LICENSE
