@@ -1,10 +1,10 @@
-import time
-import sqlite3
 import sys
-from configuration import CONFIG
-import downloads_all
-import logging
 from logging import handlers
+from parse_all import get_number_pages, scrape_result, get_project_links
+from downloads_all import *
+from typing import List
+import concurrent.futures
+import sqlite3
 
 
 # TODO - config improvements, logging
@@ -12,14 +12,17 @@ from logging import handlers
 def main():
 	setup_logging()
 	start = time.time()
+
 	conn = sqlite3.connect(CONFIG.get("db_location"))
 	c = conn.cursor()
 	c.execute("""CREATE TABLE IF NOT EXISTS mods 
 		(id INTEGER PRIMARY KEY, accessed INTEGER, link_extension TEXT, 
 		source TEXT, issues TEXT, wiki TEXT, license_link TEXT, license TEXT)""")
-	found_links = downloads_all.init_input_queue(CONFIG.get("scanner_processes"))
+
+	found_links = init_page_queue(CONFIG.get("scanner_processes"))
 	logging.info("found {} mods to use".format(len(found_links)))
-	scraped_data = downloads_all.scrape_results(found_links, CONFIG.get("scraper_processes"))
+
+	scraped_data = scrape_results(found_links, CONFIG.get("scraper_processes"))
 	if len(scraped_data) > 0:
 		logging.debug("everything scraped")
 	for mod_record in scraped_data:
@@ -29,6 +32,27 @@ def main():
 	c.close()
 	conn.close()
 	logging.info("completed in: {}".format(time.time() - start))
+
+
+def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
+	ret = []
+	number_pages = get_number_pages(download(get_listing_url()))
+	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:
+		project_ids = {executor.submit(get_project_links, get_listing_url(GAME_VERSION, i)): i for i in range(1, number_pages + 1)}
+		for future in concurrent.futures.as_completed(project_ids):
+			ret.extend(future.result())
+	return ret
+
+
+def scrape_results(exts: List[str], number_parser_processes: int) -> List[ModRecord]:
+	ret = []
+	with concurrent.futures.ProcessPoolExecutor(max_workers=number_parser_processes) as executor:
+		pages = {executor.submit(scrape_result, get_content_url(i), i): i for i in exts}
+		for future in concurrent.futures.as_completed(pages):
+			f = future.result()
+			if f is not None:
+				ret.append(f)
+	return ret
 
 
 def setup_logging():
@@ -42,13 +66,7 @@ def setup_logging():
 		handlers=loghandlers
 	)
 	logging.debug("Initialised!")
-	logging.debug("recursion limit is %d", sys.getrecursionlimit())
 
 
 if __name__ == "__main__":
-	# sys.setrecursionlimit(1500)   # TODO - possible crash here due to recursion limit reached (rewrite iteratively if at all possible)
-	main()                          # could do something like only run half at once
-									# or only add to the queue when it is empty enough
-									# beautifulsoup and queue give a very large recursion issue
-									# would be nice of python did tail optimisation
-									# likely reproduction conditions: small number of workers (?), stable internet with no timeouts, fresh install
+	main()
