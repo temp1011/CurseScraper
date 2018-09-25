@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup
-from downloads_all import download, ModRecord
+
+from database import DB
+from download import download, ModRecord
 from bs4.element import NavigableString
-import sqlite3
 from configuration import CONFIG
 import logging
 import time
@@ -28,8 +29,7 @@ def get_number_pages(raw_bytes) -> int:  # curseforge gives us mobile stuff here
 def get_project_links(url: str):
 	raw_content = BeautifulSoup(download(url), "lxml")
 
-	connection = sqlite3.connect(CONFIG.get("db_location"))
-	cursor = connection.cursor()
+	db = DB()
 	logging.debug("page %s", url)
 	foundIDs = []
 	ul = raw_content.find("ul", class_="listing listing-project project-listing")
@@ -42,7 +42,7 @@ def get_project_links(url: str):
 
 		name_tab = info_name.div.a
 		name_link = name_tab.get("href")
-		found_link = cursor.execute("SELECT id, accessed FROM mods WHERE link_extension=? LIMIT 1", (name_link,)).fetchone()
+		found_link = db.get_cache_info(name_link)
 
 		if not found_link:
 			foundIDs.append(name_link)
@@ -53,8 +53,7 @@ def get_project_links(url: str):
 				foundIDs.append(name_link)
 			else:
 				logging.debug("ignoring ID already in db %d" % found_link[0])
-	cursor.close()
-	connection.close()
+	db.close()
 	return foundIDs
 
 

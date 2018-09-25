@@ -1,10 +1,11 @@
 import sys
 from logging import handlers
-from parse_all import get_number_pages, scrape_result, get_project_links
-from downloads_all import *
+
+import database
+from parse import get_number_pages, scrape_result, get_project_links
+from download import *
 from typing import List
 import concurrent.futures
-import sqlite3
 
 
 # TODO - config improvements, logging
@@ -13,11 +14,7 @@ def main():
 	setup_logging()
 	start = time.time()
 
-	conn = sqlite3.connect(CONFIG.get("db_location"))
-	c = conn.cursor()
-	c.execute("""CREATE TABLE IF NOT EXISTS mods 
-		(id INTEGER PRIMARY KEY, accessed INTEGER, link_extension TEXT, 
-		source TEXT, issues TEXT, wiki TEXT, license_link TEXT, license TEXT)""")
+	db = database.DB().create()
 
 	found_links = init_page_queue(CONFIG.get("scanner_processes"))
 	logging.info("found {} mods to use".format(len(found_links)))
@@ -26,11 +23,8 @@ def main():
 	if len(scraped_data) > 0:
 		logging.debug("everything scraped")
 	for mod_record in scraped_data:
-		c.execute("DELETE FROM mods WHERE id = ?", (mod_record.get_project_id(),))  # does this cause performance issues?
-		c.execute("INSERT INTO mods VALUES (?,?,?,?,?,?,?,?)", mod_record.as_tuple())   # TODO - replace rather than delete to allow only certain things to be recached
-	conn.commit()
-	c.close()
-	conn.close()
+		db.update_or_create(mod_record)
+	db.close()
 	logging.info("completed in: {}".format(time.time() - start))
 
 
