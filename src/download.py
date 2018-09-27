@@ -36,7 +36,6 @@ class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 	             "_wiki_link",
 	             "_issues_link",
 	             "_source_link",
-	             "_license_link",
 	             "_name_link",
 	             "_license")
 
@@ -45,7 +44,6 @@ class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 		self._wiki_link = None
 		self._issues_link = None
 		self._source_link = None
-		self._license_link = None
 		self._license = None
 		self._name_link = None
 
@@ -56,7 +54,6 @@ class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 		ret += str(self._wiki_link) + " "
 		ret += str(self._issues_link) + " "
 		ret += str(self._source_link) + " "
-		ret += str(self._license_link) + " "
 		ret += str(self._license)
 		return ret
 
@@ -68,9 +65,6 @@ class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 
 	def set_source_link(self, source_link):
 		self._source_link = source_link
-
-	def set_license_link(self, license_link):
-		self._license_link = license_link
 
 	def set_license(self, lic):
 		self._license = lic
@@ -85,7 +79,7 @@ class ModRecord:    # TODO - use tuple/dict instead of this ugly class
 		return self._project_id
 
 	def test_form(self):    # don't use accessed time for test cases
-		return self._project_id, self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license_link, self._license
+		return self._project_id, self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license
 
 	def as_tuple(self): # TODO - perhaps there is a better way to do this, also maybe set accessed time?
-		return self._project_id, int(time.time()), self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license_link, self._license
+		return self._project_id, int(time.time()), self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license

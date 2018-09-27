@@ -8,7 +8,8 @@ import logging
 import time
 
 
-def get_number_pages(raw_bytes) -> int:  # curseforge gives us mobile stuff here
+def get_number_pages(raw_bytes) -> int:
+	# requests seems to return the mobile/no js layout here
 	highest = 0
 	page_list = BeautifulSoup(raw_bytes, "lxml").find(
 		class_="b-pagination-list paging-list j-tablesorter-pager j-listing-pagination")
@@ -75,7 +76,6 @@ def scrape_result(url, ext):
 			pass
 	side_bar = raw_content.find("ul", class_="cf-details project-details")
 	license_stuff = side_bar.find("a")
-	ret.set_license_link(license_stuff.get("href"))
 	ret.set_license(get_license_string(license_stuff))
 	ret.set_project_id(int(side_bar.contents[1].contents[3].string))  # TODO - try and make this a little less order dependant
 	ret.set_name_link(ext)

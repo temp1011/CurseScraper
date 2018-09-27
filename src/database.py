@@ -25,7 +25,6 @@ class DB:
 			source TEXT, 
 			issues TEXT, 
 			wiki TEXT, 
-			license_link TEXT, 
 			license TEXT
 			)""")
 		return self
@@ -39,9 +38,8 @@ class DB:
 		source, 
 		issues, 
 		wiki, 
-		license_link, 
 		license)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", mod_record.as_tuple())
+		VALUES (?, ?, ?, ?, ?, ?, ?)""", mod_record.as_tuple())
 
 	def get_cache_info(self, name_link):
 		return self.cur.execute("SELECT id, accessed FROM mods WHERE link_extension=? LIMIT 1", (name_link,)).fetchone()
