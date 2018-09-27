@@ -30,10 +30,18 @@ class DB:
 			)""")
 		return self
 
-	# upsert? insert or ignore?
 	def update_or_create(self, mod_record):
-		self.cur.execute("DELETE FROM mods WHERE id = ?", (mod_record.get_project_id(),))  # does this cause performance issues?
-		self.cur.execute("INSERT INTO mods VALUES (?,?,?,?,?,?,?,?)", mod_record.as_tuple())   # TODO - replace rather than delete to allow only certain things to be recached
+		# it doesn't actually matter if the primary key gets replaced since it will be the same
+		self.cur.execute("""INSERT OR REPLACE INTO mods
+		(id, 
+		accessed, 
+		link_extension, 
+		source, 
+		issues, 
+		wiki, 
+		license_link, 
+		license)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", mod_record.as_tuple())
 
 	def get_cache_info(self, name_link):
 		return self.cur.execute("SELECT id, accessed FROM mods WHERE link_extension=? LIMIT 1", (name_link,)).fetchone()
