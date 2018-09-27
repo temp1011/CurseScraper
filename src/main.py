@@ -8,8 +8,6 @@ from typing import List
 import concurrent.futures
 
 
-# TODO - config improvements, logging
-# configs - number of processes for both, whether to download or load from disk, game version, cache timeout (or not)
 def main():
 	setup_logging()
 	start = time.time()

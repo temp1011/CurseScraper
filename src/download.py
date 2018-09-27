@@ -5,7 +5,10 @@ import logging
 
 CURSEFORGE_HOME = "https://minecraft.curseforge.com"
 CURSEFORGE_URL = CURSEFORGE_HOME + "/mc-mods?%s"
+
 GAME_VERSION = CONFIG.get("game_version")
+TIMEOUT = CONFIG.get("download_timeout")
+TRIES = CONFIG.get("download_tries")
 
 
 def get_listing_url(game_version: str = GAME_VERSION, page: int = 1) -> str:
@@ -19,9 +22,8 @@ def get_content_url(ext: str):
 def download(url: str):
 	logging.debug("downloading: %s", url)
 	tries = 0
-	# TODO - config for timeout and tries
-	while tries < 5:
-		with request.urlopen(url, timeout=10) as page:
+	while tries < TRIES:
+		with request.urlopen(url, timeout=TIMEOUT) as page:
 			try:
 				return page.read()
 			except Exception as e:

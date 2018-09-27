@@ -1,5 +1,6 @@
 import configparser
 import os
+import socket
 from pathlib import Path
 
 
@@ -23,9 +24,10 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 			"updating content": 10
 		}
 
-		config["cache"] = {
-			"# zero or less means no timeout": None,
-			"timeout": 3600
+		config["downloading"] = {
+			"# 0 or less will use default timeout for requests": None,
+			"timeout": 10,
+			"tries": 5
 		}
 
 		config["curseforge"] = {  # TODO - support for games other than minecraft?
@@ -35,7 +37,9 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 
 		config["db"] = {
 			"# relative to the source files": None,
-			"location": "../mods.db"
+			"location": "../mods.db",
+			"# zero or less means no timeout": None,
+			"timeout": 3600
 		}
 
 		config["logging"] = {
@@ -55,19 +59,24 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 		self.values["scanner_processes"] = int(processes["finding content"])
 		self.values["scraper_processes"] = int(processes["updating content"])
 
-		cache = config["cache"]
-		self.values["cache_timeout"] = int(cache["timeout"])
-
 		curseforge = config["curseforge"]
 		self.values["game_version"] = curseforge["game version"]
 
 		db = config["db"]
 		self.values["db_location"] = absolute_path(db["location"])
+		self.values["cache_timeout"] = int(db["timeout"])
 
 		log = config["logging"]
 		self.values["log_location"] = absolute_path(log["location"])
 		self.values["log_use_stdout"] = log["print to stdout"]
 		self.values["log_level"] = log["log level"]
+
+		downloading = config["downloading"]
+		timeout = int(downloading["timeout"])
+		if timeout <= 0:
+			timeout = socket._GLOBAL_DEFAULT_TIMEOUT    # unsafe?
+		self.values["download_timeout"] = timeout
+		self.values["download_tries"] = int(downloading["tries"])
 
 	def get(self, param):
 		return self.values[param]
