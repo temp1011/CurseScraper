@@ -32,7 +32,11 @@ def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 	ret = []
 	number_pages = get_number_pages(download(get_listing_url()))
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:
-		project_ids = {executor.submit(get_project_links, get_listing_url(GAME_VERSION, i)): i for i in range(1, number_pages + 1)}
+		project_ids = {
+			executor.submit(get_project_links,
+				get_listing_url(GAME_VERSION, i)):
+				i for i in range(1, number_pages + 1)
+		}
 		for future in concurrent.futures.as_completed(project_ids):
 			ret.extend(future.result())
 	return ret
@@ -51,7 +55,7 @@ def scrape_results(exts: List[str], number_parser_processes: int) -> List[ModRec
 
 def setup_logging():
 	logging.getLogger()
-	loghandlers = [	logging.handlers.RotatingFileHandler(CONFIG.get("log_location"), mode="w")]
+	loghandlers = [logging.handlers.RotatingFileHandler(CONFIG.get("log_location"), mode="w")]
 	if CONFIG.get("log_use_stdout"):
 		loghandlers.append(logging.StreamHandler(sys.stdout))
 	logging.basicConfig(
