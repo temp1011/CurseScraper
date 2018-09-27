@@ -45,7 +45,7 @@ def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 def scrape_results(exts: List[str], number_parser_processes: int) -> List[ModRecord]:
 	ret = []
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_parser_processes) as executor:
-		pages = {executor.submit(scrape_result, get_content_url(i), i): i for i in exts}
+		pages = {executor.submit(scrape_result, i): i for i in exts}
 		for future in concurrent.futures.as_completed(pages):
 			f = future.result()
 			if f is not None:

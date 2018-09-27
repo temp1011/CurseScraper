@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 
 from database import DB
-from download import download, ModRecord
+from download import download, ModRecord, get_content_url
 from bs4.element import NavigableString
 from configuration import CONFIG
 import logging
@@ -58,7 +58,8 @@ def get_project_links(url: str):
 	return foundIDs
 
 
-def scrape_result(url, ext):
+def scrape_result(ext):
+	url = get_content_url(ext)
 	raw_bytes = download(url)
 
 	raw_content = BeautifulSoup(raw_bytes, "lxml")
