@@ -15,16 +15,16 @@ class DB:
 		self.conn.close()
 
 	def create(self):
-		self.cur.execute("""CREATE TABLE 
-		IF NOT EXISTS 
-			mods 
+		self.cur.execute("""CREATE TABLE
+		IF NOT EXISTS
+			mods
 			(
-			id INTEGER PRIMARY KEY, 
-			accessed INTEGER, 
-			link_extension TEXT, 
-			source TEXT, 
-			issues TEXT, 
-			wiki TEXT, 
+			id INTEGER PRIMARY KEY,
+			accessed INTEGER,
+			link_extension TEXT,
+			source TEXT,
+			issues TEXT,
+			wiki TEXT,
 			license TEXT
 			)""")
 		return self
@@ -32,12 +32,12 @@ class DB:
 	def update_or_create(self, mod_record):
 		# it doesn't actually matter if the primary key gets replaced since it will be the same
 		self.cur.execute("""INSERT OR REPLACE INTO mods
-		(id, 
-		accessed, 
-		link_extension, 
-		source, 
-		issues, 
-		wiki, 
+		(id,
+		accessed,
+		link_extension,
+		source,
+		issues,
+		wiki,
 		license)
 		VALUES (?, ?, ?, ?, ?, ?, ?)""", mod_record.as_tuple())
 

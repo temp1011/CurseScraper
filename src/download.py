@@ -32,8 +32,8 @@ def download(url: str):
 	logging.error("page %s timed out too many times", url)
 	raise Exception("Page timed out too many times")
 
-
-class ModRecord:    # TODO - use tuple/dict instead of this ugly class
+# could use tuple/dict here but this is safer (and not stringly typed!)
+class ModRecord:
 	__slots__ = ("_project_id",
 	             "_wiki_link",
 	             "_issues_link",

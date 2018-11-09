@@ -11,7 +11,9 @@ def absolute_path(relative_path):
 CONFIG_FILE = absolute_path("../config.ini")
 
 
-class Config:  # In theory these could be a dict but setting/accessing things globally in python is rather messy
+class Config:
+# In theory this could be a dict but setting/accessing things globally in python is rather messy
+# better to follow OOP and encapsulate everything
 
 	def __init__(self):
 		self.values = {}
@@ -74,7 +76,7 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 		downloading = config["downloading"]
 		timeout = int(downloading["timeout"])
 		if timeout <= 0:
-			timeout = socket._GLOBAL_DEFAULT_TIMEOUT    # unsafe?
+			timeout = socket._GLOBAL_DEFAULT_TIMEOUT
 		self.values["download_timeout"] = timeout
 		self.values["download_tries"] = int(downloading["tries"])
 
@@ -85,5 +87,5 @@ class Config:  # In theory these could be a dict but setting/accessing things gl
 		return self.values.__repr__()
 
 
-# instance of the config to use
+# instance
 CONFIG = Config()
