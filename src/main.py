@@ -1,11 +1,11 @@
+import concurrent.futures
 import sys
 from logging import handlers
+from typing import List
 
 import database
-from parse import get_number_pages, scrape_result, get_project_links
 from download import *
-from typing import List
-import concurrent.futures
+from parse import get_number_pages, scrape_result, get_project_links
 
 
 def main():
@@ -32,7 +32,7 @@ def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:
 		project_ids = {
 			executor.submit(get_project_links,
-				get_listing_url(GAME_VERSION, i)):
+			                get_listing_url(GAME_VERSION, i)):
 				i for i in range(1, number_pages + 1)
 		}
 		for future in concurrent.futures.as_completed(project_ids):
@@ -57,7 +57,7 @@ def setup_logging():
 	if CONFIG.get("log_use_stdout"):
 		loghandlers.append(logging.StreamHandler(sys.stdout))
 	logging.basicConfig(
-		format="%(asctime)s [%(processName)-12.12s] [%(levelname)-7.7s]  %(message)s",
+		format="%(asctime)s [%(processName)-14.14s] [%(levelname)-7.7s]  %(message)s",
 		level=getattr(logging, CONFIG.get("log_level").upper(), None),
 		handlers=loghandlers
 	)

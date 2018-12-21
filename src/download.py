@@ -5,6 +5,10 @@ import logging
 
 CURSEFORGE_HOME = "https://minecraft.curseforge.com"
 CURSEFORGE_URL = CURSEFORGE_HOME + "/mc-mods?%s"
+# from python docs: https://docs.python.org/3.4/library/urllib.request.html#urllib.request.Request
+HEADERS = {
+	"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36"
+}
 
 GAME_VERSION = CONFIG.get("game_version")
 TIMEOUT = CONFIG.get("download_timeout")
@@ -23,14 +27,15 @@ def download(url: str):
 	logging.debug("downloading: %s", url)
 	tries = 0
 	while tries < TRIES:
-		with request.urlopen(url, timeout=TIMEOUT) as page:
+		with request.urlopen(request.Request(url, headers=HEADERS), timeout=TIMEOUT) as page:
 			try:
 				return page.read()
 			except Exception as e:
-				logging.warn(e.__repr__())
+				logging.warning(e.__repr__())
 		tries += 1
 	logging.error("page %s timed out too many times", url)
 	raise Exception("Page timed out too many times")
+
 
 # could use tuple/dict here but this is safer (and not stringly typed!)
 class ModRecord:
