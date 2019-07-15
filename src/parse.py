@@ -50,7 +50,11 @@ def needs_refresh(link: str) -> bool:
 # TODO - should split up downloading part of this
 def scrape_result(ext):
 	url = get_content_url(ext)
-	raw_bytes = download(url)
+	try:
+		raw_bytes = download(url)
+	except Exception as e:
+		logging.error("extension {} could not be parsed due to download timeout".format(ext))
+		return None
 
 	raw_content = BeautifulSoup(raw_bytes, "lxml")
 	ret = ModRecord()
