@@ -10,75 +10,88 @@ import time
 
 def get_number_pages(raw_bytes) -> int:
 	# requests seems to return the mobile/no js layout here
-	highest = 0
 	page_list = BeautifulSoup(raw_bytes, "lxml").find(
-		class_="b-pagination-list paging-list j-tablesorter-pager j-listing-pagination")
-	for li in page_list.children:
-		if isinstance(li, NavigableString):
-			continue
+		class_="pagination pagination-top flex items-center")
 
-		link_class = li.find("a")
-		if link_class is not None:
-			link = link_class.get("href")
-			if link is not None:
-				page_number = int(link.split("page")[1].replace("=", ""))
-				highest = max(page_number, highest)
+	link_classes = page_list.find_all("a", class_="pagination-item")
+	highest = max([int(l.span.string) for l in link_classes])
 
 	return highest
 
 
+# TODO - separate caching logic from this
 def get_project_links(url: str):
 	raw_content = BeautifulSoup(download(url), "lxml")
 
-	db = DB()
 	logging.debug("page %s", url)
-	foundIDs = []
-	ul = raw_content.find("ul", class_="listing listing-project project-listing")
-	for li in ul.children:
-		if isinstance(li, NavigableString):
-			continue
-		mod_descriptor = li.find("div", class_="details")
 
-		info_name = mod_descriptor.find("div", class_="info name")
+	classes = raw_content.find_all("div", class_="my-2")
+	links = {c.find("a", class_="my-auto").get("href") for c in classes}
+	return links
 
-		name_tab = info_name.div.a
-		name_link = name_tab.get("href")
-		found_link = db.get_cache_info(name_link)
+
+# TODO - probably shouldnt be in this file
+def needs_refresh(link: str) -> bool:
+	with DB() as db:
+		found_link = db.get_cache_info(link)
 
 		if not found_link:
-			foundIDs.append(name_link)
-			logging.debug("added mod %s" % name_link)
+			logging.debug("added mod %s" % link)
+			return True
 		else:
 			if int(time.time()) - found_link[1] > CONFIG.get("cache_timeout"):
-				logging.debug("cache expired on %s" % name_link)
-				foundIDs.append(name_link)
+				logging.debug("cache expired on %s" % link)
+				return True
 			else:
 				logging.debug("ignoring ID already in db %d" % found_link[0])
-	db.close()
-	return foundIDs
+				return False
 
 
+# TODO - should split up downloading part of this
 def scrape_result(ext):
 	url = get_content_url(ext)
 	raw_bytes = download(url)
 
 	raw_content = BeautifulSoup(raw_bytes, "lxml")
 	ret = ModRecord()
-	for header in raw_content.find("ul", class_="e-menu").find_all("a", class_="external-link"):
-		s = header.string.strip().lower()
-		link = header.get("href").strip()
-		if s == "source":
+	link_bar = raw_content.find("nav", class_="container mx-auto").ul
+	for li in link_bar.children:
+		if isinstance(li, NavigableString):
+			continue
+		s = li.get("id")
+		link = li.a.get("href")
+		if "source" in s:
 			ret.set_source_link(link)
-		elif s == "wiki":
+		elif "wiki" in s:
 			ret.set_wiki_link(link)
-		elif s == "issues":
+		elif "issues" in s:
 			ret.set_issues_link(link)
 		else:
 			pass
-	side_bar = raw_content.find("ul", class_="cf-details project-details")
-	license_stuff = side_bar.find("a")
-	ret.set_license(get_license_string(license_stuff))
-	ret.set_project_id(int(side_bar.contents[1].contents[3].string))  # TODO - try and make this a little less order dependant
+
+	sidebar_text = raw_content.find("div", class_="flex flex-col mb-3")
+	# print(sidebar_text.prettify())
+	for div in sidebar_text:
+		if isinstance(div, NavigableString):
+			continue
+
+		# this is quite ugly...
+		# ideally need zip or filter or something...
+		counter = 0
+		key = None
+		for child in div.children:
+			if isinstance(child, NavigableString):
+				continue
+			else:
+				if counter == 0:
+					key = child.string
+					counter += 1
+				elif counter == 1:
+					if "Project" in key:
+						ret.set_project_id(int(child.string))
+					if "License" in key.strip():
+						ret.set_license(child.string.strip())
+
 	ret.set_name_link(ext)
 	return ret
 

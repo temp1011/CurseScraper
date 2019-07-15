@@ -2,6 +2,7 @@ import configparser
 import os
 import socket
 from pathlib import Path
+import sys
 
 
 def absolute_path(relative_path):
@@ -49,6 +50,12 @@ class Config:
 			"print to stdout": True,
 			"log level": "debug"
 		}
+
+		config["rate_limiting"] = {
+			"# use to only update a portion of the database at once so that the server ": None,
+			"# doesn't start returning Http Error 500. 0 or lower will give 'infinite' number": None,
+			"max search": 1000
+		}
 		with open(CONFIG_FILE, "w") as configfile:
 			config.write(configfile)
 		self.read_config()
@@ -79,6 +86,10 @@ class Config:
 			timeout = socket._GLOBAL_DEFAULT_TIMEOUT
 		self.values["download_timeout"] = timeout
 		self.values["download_tries"] = int(downloading["tries"])
+
+		rate_limiting = config["rate_limiting"]
+		max_search = int(rate_limiting["max search"])
+		self.values["max_search"] = max_search if max_search > 0 else sys.maxsize
 
 	def get(self, param):
 		return self.values[param]

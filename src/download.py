@@ -1,10 +1,11 @@
 import time
-from urllib import request, parse
+import urllib
+from urllib import request, parse, error
 from configuration import CONFIG
 import logging
 
-CURSEFORGE_HOME = "https://minecraft.curseforge.com"
-CURSEFORGE_URL = CURSEFORGE_HOME + "/mc-mods?%s"
+CURSEFORGE_HOME = "https://www.curseforge.com"
+CURSEFORGE_URL = CURSEFORGE_HOME + "/minecraft/mc-mods?%s"
 # from python docs: https://docs.python.org/3.4/library/urllib.request.html#urllib.request.Request
 HEADERS = {
 	"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36"
@@ -22,16 +23,20 @@ def get_listing_url(game_version: str = GAME_VERSION, page: int = 1) -> str:
 def get_content_url(ext: str):
 	return CURSEFORGE_HOME + ext
 
-
+# TODO - needs to return something even if things go wrong or exception needs to come back
 def download(url: str):
 	logging.debug("downloading: %s", url)
 	tries = 0
 	while tries < TRIES:
-		with request.urlopen(request.Request(url, headers=HEADERS), timeout=TIMEOUT) as page:
-			try:
-				return page.read()
-			except Exception as e:
-				logging.warning(e.__repr__())
+		try:
+			with request.urlopen(request.Request(url, headers=HEADERS), timeout=TIMEOUT) as page:
+				try:
+					return page.read()
+				except Exception as e:
+					logging.warning(e.__repr__())
+		except urllib.error.HTTPError as e:
+			logging.error(e.__repr__(), url)
+
 		tries += 1
 	logging.error("page %s timed out too many times", url)
 	raise Exception("Page timed out too many times")

@@ -2,8 +2,18 @@ import sqlite3
 from configuration import CONFIG
 
 
-# TODO - generator for this?
+# TODO - generator for this? yes pls
 class DB:
+
+	def __enter__(self):
+		self.conn = sqlite3.connect(CONFIG.get("db_location"))
+		self.cur = self.conn.cursor()
+		return self
+
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		self.conn.commit()
+		self.cur.close()
+		self.conn.close()
 
 	def __init__(self):
 		self.conn = sqlite3.connect(CONFIG.get("db_location"))

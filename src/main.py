@@ -5,24 +5,25 @@ from typing import List
 
 import database
 from download import *
-from parse import get_number_pages, scrape_result, get_project_links
+from parse import get_number_pages, scrape_result, get_project_links, needs_refresh
 
 
 def main():
 	setup_logging()
 	start = time.time()
 
-	db = database.DB().create()
+	with database.DB() as db:
+		found_links = init_page_queue(CONFIG.get("scanner_processes"))
+		found_links = list(filter(needs_refresh, found_links))
+		found_links = found_links[:CONFIG.get("max_search")]
+		logging.info("found {} mods to use".format(len(found_links)))
 
-	found_links = init_page_queue(CONFIG.get("scanner_processes"))
-	logging.info("found {} mods to use".format(len(found_links)))
+		scraped_data = scrape_results(found_links, CONFIG.get("scraper_processes"))
+		if len(scraped_data) > 0:
+			logging.debug("everything scraped")
+		for mod_record in scraped_data:
+			db.update_or_create(mod_record)
 
-	scraped_data = scrape_results(found_links, CONFIG.get("scraper_processes"))
-	if len(scraped_data) > 0:
-		logging.debug("everything scraped")
-	for mod_record in scraped_data:
-		db.update_or_create(mod_record)
-	db.close()
 	logging.info("completed in: {}".format(time.time() - start))
 
 
