@@ -22,6 +22,7 @@ def main():
 		if len(scraped_data) > 0:
 			logging.debug("everything scraped")
 		for mod_record in scraped_data:
+			# TODO - would be nice to have a db writer thread and some kind of mpsc for other threads to send to it
 			db.update_or_create(mod_record)
 
 	logging.info("completed in: {}".format(time.time() - start))
