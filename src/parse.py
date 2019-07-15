@@ -21,10 +21,13 @@ def get_number_pages(raw_bytes: bytes) -> int:
 	return highest
 
 
-def get_project_links(url: str) -> Set[str]:
-	raw_content = BeautifulSoup(download(url), "lxml")
-
+def fetch_and_get_project_links(url: str) -> Set[str]:
 	logging.debug("page %s", url)
+	return get_project_links(download(url))
+
+
+def get_project_links(raw: bytes) -> Set[str]:
+	raw_content = BeautifulSoup(raw, "lxml")
 
 	classes = raw_content.find_all("div", class_="my-2")
 	links = {c.find("a", class_="my-auto").get("href") for c in classes}

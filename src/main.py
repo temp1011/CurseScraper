@@ -5,7 +5,7 @@ from typing import List
 
 import database
 from download import *
-from parse import get_number_pages, get_project_links, needs_refresh, fetch_and_scrape
+from parse import get_number_pages, get_project_links, needs_refresh, fetch_and_scrape, fetch_and_get_project_links
 
 
 def main():
@@ -32,7 +32,7 @@ def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 	number_pages = get_number_pages(download(get_listing_url()))
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:
 		project_ids = {
-			executor.submit(get_project_links,
+			executor.submit(fetch_and_get_project_links,
 			                get_listing_url(GAME_VERSION, i)):
 				i for i in range(1, number_pages + 1)
 		}

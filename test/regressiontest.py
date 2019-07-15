@@ -14,7 +14,7 @@ def url_exists(url: str) -> bool:
 	try:
 		res = download.download(url)
 		return res is not None
-	except Exception as e:
+	except Exception:
 		return False
 
 
@@ -28,7 +28,7 @@ class TestParse(unittest.TestCase):
 	# a basic regression test to check that parsing still works (and curseforge hasn't changed their website format)
 	def test_mod_parse(self):
 		modrecord = parse.fetch_and_scrape("/minecraft/mc-mods/jei")
-		self.assertEqual(self.jei_record, modrecord.test_form().__repr__()) # TODO - this should just assert length and stuff
+		self.assertEqual(238222, modrecord.get_project_id())    # pretty much the only thing I can guarantee
 
 	def test_mod_parse_specific(self):
 		with open(relative_path("resources/jei_page_20190715.html"), "rb") as f:
@@ -62,12 +62,13 @@ class TestParse(unittest.TestCase):
 		             "cannot parse number of pages correctly")  # 10 is a reasonable number for any version
 
 	def test_project_links_specific(self):
-		# with open(relative_path())
-		pass  # TODO project_links neesd to be refactored to take the html, not a url
+		links = {'/minecraft/mc-mods/mouse-tweaks', '/minecraft/mc-mods/crafttweaker', '/minecraft/mc-mods/iron-chests', '/minecraft/mc-mods/inventory-tweaks', '/minecraft/mc-mods/resource-loader', '/minecraft/mc-mods/chisel', '/minecraft/mc-mods/codechicken-lib-1-8', '/minecraft/mc-mods/applied-energistics-2', '/minecraft/mc-mods/shadowfacts-forgelin', '/minecraft/mc-mods/baubles', '/minecraft/mc-mods/ctm', '/minecraft/mc-mods/appleskin', '/minecraft/mc-mods/jei', '/minecraft/mc-mods/modtweaker', '/minecraft/mc-mods/thermal-foundation', '/minecraft/mc-mods/tinkers-construct', '/minecraft/mc-mods/mantle', '/minecraft/mc-mods/cofh-core', '/minecraft/mc-mods/journeymap', '/minecraft/mc-mods/custom-main-menu'}
+		with open(relative_path("resources/mod_listing_page_1_20190715.html"), "rb") as f:
+			self.assertEqual(links, parse.get_project_links(f.read()))
 
 	def test_project_links_general(self):
 		url = download.get_listing_url(download.GAME_VERSION, 1)
-		res = parse.get_project_links(url)
+		res = parse.fetch_and_get_project_links(url)
 		print(res)
 		self.assertTrue(i is not None for i in res)
 		self.assertTrue(len(res) > 0)
