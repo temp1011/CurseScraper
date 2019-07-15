@@ -94,10 +94,3 @@ def scrape_result(ext):
 
 	ret.set_name_link(ext)
 	return ret
-
-
-def get_license_string(license_stuff):
-	if license_stuff.string:
-		return license_stuff.string.strip()
-	else:
-		return license_stuff.span.get("title")
