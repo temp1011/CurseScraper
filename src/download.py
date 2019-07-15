@@ -20,11 +20,11 @@ def get_listing_url(game_version: str = GAME_VERSION, page: int = 1) -> str:
 	return CURSEFORGE_URL % parse.urlencode({"filter-game-version": game_version, "page": page})
 
 
-def get_content_url(ext: str):
+def get_content_url(ext: str) -> str:
 	return CURSEFORGE_HOME + ext
 
-# TODO - needs to return something even if things go wrong or exception needs to come back
-def download(url: str):
+
+def download(url: str) -> bytes:
 	logging.debug("downloading: %s", url)
 	tries = 0
 	while tries < TRIES:

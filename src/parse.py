@@ -1,3 +1,5 @@
+from typing import Optional, Set
+
 from bs4 import BeautifulSoup
 
 from database import DB
@@ -8,7 +10,7 @@ import logging
 import time
 
 
-def get_number_pages(raw_bytes) -> int:
+def get_number_pages(raw_bytes: bytes) -> int:
 	# requests seems to return the mobile/no js layout here
 	page_list = BeautifulSoup(raw_bytes, "lxml").find(
 		class_="pagination pagination-top flex items-center")
@@ -19,8 +21,7 @@ def get_number_pages(raw_bytes) -> int:
 	return highest
 
 
-# TODO - separate caching logic from this
-def get_project_links(url: str):
+def get_project_links(url: str) -> Set[str]:
 	raw_content = BeautifulSoup(download(url), "lxml")
 
 	logging.debug("page %s", url)
@@ -48,9 +49,9 @@ def needs_refresh(link: str) -> bool:
 
 
 # TODO - should split up downloading part of this
-def scrape_result(ext):
+def scrape_result(ext: str) -> Optional[ModRecord]:
 	url = get_content_url(ext)
-	try:
+	try:  # seems to be due to https://www.curseforge.com/minecraft/mc-mods/lan-essentials causing timeouts
 		raw_bytes = download(url)
 	except Exception as e:
 		logging.error("extension {} could not be parsed due to download timeout".format(ext))
