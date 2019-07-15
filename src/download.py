@@ -81,8 +81,8 @@ class ModRecord:
 	def set_license(self, lic):
 		self._license = lic
 
-	def set_project_id(self, id):
-		self._project_id = id
+	def set_project_id(self, i_d):
+		self._project_id = i_d
 
 	def set_name_link(self, name_link):
 		self._name_link = name_link

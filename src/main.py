@@ -5,7 +5,7 @@ from typing import List
 
 import database
 from download import *
-from parse import get_number_pages, scrape_result, get_project_links, needs_refresh
+from parse import get_number_pages, get_project_links, needs_refresh, fetch_and_scrape
 
 
 def main():
@@ -44,7 +44,7 @@ def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 def scrape_results(exts: List[str], number_parser_processes: int) -> List[ModRecord]:
 	ret = []
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_parser_processes) as executor:
-		pages = {executor.submit(scrape_result, i): i for i in exts}
+		pages = {executor.submit(fetch_and_scrape, i): i for i in exts}
 		for future in concurrent.futures.as_completed(pages):
 			f = future.result()
 			if f is not None:

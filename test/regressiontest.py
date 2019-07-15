@@ -27,13 +27,13 @@ class TestParse(unittest.TestCase):
 
 	# a basic regression test to check that parsing still works (and curseforge hasn't changed their website format)
 	def test_mod_parse(self):
-		modrecord = parse.scrape_result("/minecraft/mc-mods/jei")
+		modrecord = parse.fetch_and_scrape("/minecraft/mc-mods/jei")
 		self.assertEqual(self.jei_record, modrecord.test_form().__repr__()) # TODO - this should just assert length and stuff
 
 	def test_mod_parse_specific(self):
 		with open(relative_path("resources/jei_page_20190715.html"), "rb") as f:
-			pass    #TODO Again needs split of downloading and parsing, this should assert more stuff
-		pass
+			modrecord = parse.fetch_and_scrape("/minecraft/mc-mods/jei")
+			self.assertEqual(self.jei_record, modrecord.test_form().__repr__())
 
 	# a basic check to make sure the curseforge url is the same
 	def test_listing_url_specific(self):

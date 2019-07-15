@@ -1,13 +1,13 @@
+import logging
+import time
 from typing import Optional, Set
 
 from bs4 import BeautifulSoup
+from bs4.element import NavigableString
 
+from configuration import CONFIG
 from database import DB
 from download import download, ModRecord, get_content_url
-from bs4.element import NavigableString
-from configuration import CONFIG
-import logging
-import time
 
 
 def get_number_pages(raw_bytes: bytes) -> int:
@@ -48,15 +48,21 @@ def needs_refresh(link: str) -> bool:
 				return False
 
 
-# TODO - should split up downloading part of this
-def scrape_result(ext: str) -> Optional[ModRecord]:
+# TODO - maybe this should be moved to a different file
+def fetch_and_scrape(ext: str) -> Optional[ModRecord]:
 	url = get_content_url(ext)
 	try:  # seems to be due to https://www.curseforge.com/minecraft/mc-mods/lan-essentials causing timeouts
 		raw_bytes = download(url)
-	except Exception as e:
+	except Exception:
 		logging.error("extension {} could not be parsed due to download timeout".format(ext))
 		return None
 
+	record = scrape_result(raw_bytes)
+	record.set_name_link(ext)
+	return record
+
+
+def scrape_result(raw_bytes: bytes) -> ModRecord:
 	raw_content = BeautifulSoup(raw_bytes, "lxml")
 	ret = ModRecord()
 	link_bar = raw_content.find("nav", class_="container mx-auto").ul
@@ -75,7 +81,6 @@ def scrape_result(ext: str) -> Optional[ModRecord]:
 			pass
 
 	sidebar_text = raw_content.find("div", class_="flex flex-col mb-3")
-	# print(sidebar_text.prettify())
 	for div in sidebar_text:
 		if isinstance(div, NavigableString):
 			continue
@@ -96,6 +101,4 @@ def scrape_result(ext: str) -> Optional[ModRecord]:
 						ret.set_project_id(int(child.string))
 					if "License" in key.strip():
 						ret.set_license(child.string.strip())
-
-	ret.set_name_link(ext)
 	return ret
