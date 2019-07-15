@@ -19,9 +19,7 @@ def url_exists(url: str) -> bool:
 
 
 # contains both tests against specific saved html and general stuff in case the curseforge website changes.
-# Perhaps this should be split up
-# TODO - specific/general should be spit to unit/integration I think?
-# then can also just download first page once hopefully.
+# Hopefully this means I am more safe against changes by refactoring and changes to the curseforge website
 class TestParse(unittest.TestCase):
 	jei_record = "(238222, '/minecraft/mc-mods/jei', 'https://github.com/mezz/JustEnoughItems', 'https://github.com/mezz/JustEnoughItems/issues?q=is%3Aissue', None, 'MIT License')"
 
