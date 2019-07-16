@@ -1,16 +1,13 @@
 import configparser
 import multiprocessing
-import socket
 from pathlib import Path
 import sys
 
 
-# TODO - this is duplicated with function in tests I think. Should move to a util file maybe
-# In fact, this version looks worse...
 from utils import relative_path
 
 
-CONFIG_FILE = relative_path("../config.ini")
+CONFIG_FILE = relative_path("config.ini")
 
 
 class Config:
@@ -31,12 +28,6 @@ class Config:
 			"parsing": -1
 		}
 
-		config["downloading"] = {
-			"# 0 or less will use default timeout for requests": None,
-			"timeout": 10,
-			"tries": 5
-		}
-
 		config["curseforge"] = {  # TODO - support for games other than minecraft?
 			"# can be found in curseforge url for mods listing": None,
 			"game version": "2020709689:6756"
@@ -44,13 +35,13 @@ class Config:
 
 		config["db"] = {
 			"# relative to the source files": None,
-			"location": "../mods.db",
+			"location": "mods.db",
 			"# zero or less means no timeout": None,
 			"timeout": 3600
 		}
 
 		config["logging"] = {
-			"location": "../scraper.log",
+			"location": "scraper.log",
 			"print to stdout": True,
 			"log level": "debug"
 		}
@@ -84,13 +75,6 @@ class Config:
 		self.values["log_use_stdout"] = log["print to stdout"]
 		self.values["log_level"] = log["log level"]
 
-		downloading = config["downloading"]
-		timeout = int(downloading["timeout"])
-		if timeout <= 0:
-			timeout = socket._GLOBAL_DEFAULT_TIMEOUT
-		self.values["download_timeout"] = timeout
-		self.values["download_tries"] = int(downloading["tries"])
-
 		rate_limiting = config["rate_limiting"]
 		max_search = int(rate_limiting["max search"])
 		self.values["max_search"] = max_search if max_search > 0 else sys.maxsize
@@ -104,3 +88,5 @@ class Config:
 
 # instance
 CONFIG = Config()
+
+GAME_VERSION = CONFIG.get("game_version")

@@ -1,8 +1,8 @@
 import unittest
 
 import asynchronous
-import download
 import parse
+import utils
 from utils import relative_path
 
 
@@ -31,13 +31,13 @@ class TestParse(unittest.TestCase):
 
 	# a basic check to make sure the curseforge url is the same
 	def test_listing_url_specific(self):
-		self.assertTrue(url_exists(download.get_listing_url("2020709689:6756", 1)))
+		self.assertTrue(url_exists(utils.get_listing_url("2020709689:6756", 1)))
 
 	def test_content_url_specific(self):
-		self.assertTrue(url_exists(download.get_content_url("/minecraft/mc-mods/jei")))
+		self.assertTrue(url_exists(utils.get_content_url("/minecraft/mc-mods/jei")))
 
 	def test_listing_url_general(self):
-		self.assertTrue(url_exists(download.get_listing_url()))
+		self.assertTrue(url_exists(utils.get_listing_url()))
 
 	# check the download function works
 	def test_download(self):
@@ -53,7 +53,7 @@ class TestParse(unittest.TestCase):
 			self.assertEqual(maxpage, 279)
 
 	def test_number_pages_general(self):
-		url = download.get_listing_url()
+		url = utils.get_listing_url()
 		maxpage = parse.get_number_pages(asynchronous.run_single(url))
 		self.assertTrue(maxpage > 10,
 		             "cannot parse number of pages correctly")  # 10 is a reasonable number for any version
@@ -64,10 +64,10 @@ class TestParse(unittest.TestCase):
 			self.assertEqual(links, parse.get_project_links(f.read()))
 
 	def test_project_links_general(self):
-		url = download.get_listing_url(download.GAME_VERSION, 1)
+		import configuration
+		url = utils.get_listing_url(configuration.GAME_VERSION, 1)
 		res = parse.fetch_and_get_project_links(url)
-		print(res)
 		self.assertTrue(i is not None for i in res)
 		self.assertTrue(len(res) > 0)
 
-	# TODO - test for page erroring and check None handled correctly
+	# TODO - test links correct from page 1 that is saved.

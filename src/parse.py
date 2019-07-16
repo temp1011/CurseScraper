@@ -8,7 +8,8 @@ from bs4.element import NavigableString
 from asynchronous import run_single
 from configuration import CONFIG
 from database import DB
-from download import ModRecord, get_content_url
+from download import ModRecord
+from utils import get_content_url
 
 
 def get_number_pages(raw_bytes: bytes) -> int:

@@ -1,47 +1,9 @@
-import socket
 import time
-import urllib
-from urllib import request, parse, error
-from configuration import CONFIG
-import logging
 
-CURSEFORGE_HOME = "https://www.curseforge.com"
-CURSEFORGE_URL = CURSEFORGE_HOME + "/minecraft/mc-mods?%s"
 # from python docs: https://docs.python.org/3.4/library/urllib.request.html#urllib.request.Request
 HEADERS = {
 	"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36"
 }
-
-GAME_VERSION = CONFIG.get("game_version")
-TIMEOUT = CONFIG.get("download_timeout")
-TRIES = CONFIG.get("download_tries")
-
-
-def get_listing_url(game_version: str = GAME_VERSION, page: int = 1) -> str:
-	return CURSEFORGE_URL % parse.urlencode({"filter-game-version": game_version, "page": page})
-
-
-def get_content_url(ext: str) -> str:
-	return CURSEFORGE_HOME + ext
-
-
-# def download(url: str) -> bytes:
-# 	logging.debug("downloading: %s", url)
-# 	tries = 0
-# 	while tries < TRIES:
-# 		try:
-# 			with request.urlopen(request.Request(url, headers=HEADERS), timeout=TIMEOUT) as page:
-# 				try:
-# 					return page.read()
-# 				except Exception as e:
-# 					logging.warning(e.__repr__())
-# 		except urllib.error.HTTPError or socket.timeout as e:
-# 			logging.error(e.__repr__(), url)
-#
-# 		tries += 1
-# 	logging.error("page %s timed out too many times", url)
-# 	raise Exception("Page timed out too many times")
-
 
 # could use tuple/dict here but this is safer (and not stringly typed!)
 class ModRecord:

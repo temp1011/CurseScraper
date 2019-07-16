@@ -7,12 +7,11 @@ class DB:
 	def __enter__(self):
 		self.conn = sqlite3.connect(CONFIG.get("db_location"))
 		self.cur = self.conn.cursor()
+		self.create()
 		return self
 
 	def __exit__(self, exc_type, exc_val, exc_tb):
-		self.conn.commit()
-		self.cur.close()
-		self.conn.close()
+		self.close()
 
 	def close(self):
 		self.conn.commit()
