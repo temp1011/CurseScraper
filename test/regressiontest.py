@@ -1,6 +1,6 @@
 import unittest
 
-import asynchronous
+import download
 import parse
 import utils
 from utils import relative_path
@@ -8,7 +8,7 @@ from utils import relative_path
 
 def url_exists(url: str) -> bool:
 	try:
-		res = asynchronous.download(url)
+		res = download.download(url)
 		return res is not None
 	except Exception:
 		return False
@@ -17,7 +17,6 @@ def url_exists(url: str) -> bool:
 # contains both tests against specific saved html and general stuff in case the curseforge website changes.
 # Hopefully this means I am more safe against changes by refactoring and changes to the curseforge website
 class TestParse(unittest.TestCase):
-	jei_record = "(238222, '/minecraft/mc-mods/jei', 'https://github.com/mezz/JustEnoughItems', 'https://github.com/mezz/JustEnoughItems/issues?q=is%3Aissue', None, 'MIT License')"
 
 	# a basic regression test to check that parsing still works (and curseforge hasn't changed their website format)
 	def test_mod_parse(self):
@@ -25,9 +24,11 @@ class TestParse(unittest.TestCase):
 		self.assertEqual(238222, modrecord.get_project_id())    # pretty much the only thing I can guarantee
 
 	def test_mod_parse_specific(self):
+		jei_record = "(238222, '/minecraft/mc-mods/jei', 'https://github.com/mezz/JustEnoughItems', 'https://github.com/mezz/JustEnoughItems/issues?q=is%3Aissue', None, 'MIT License')"
+
 		with open(relative_path("test/resources/jei_page_20190715.html"), "rb") as f:
 			modrecord = parse.fetch_and_scrape("/minecraft/mc-mods/jei")
-			self.assertEqual(self.jei_record, modrecord.test_form().__repr__())
+			self.assertEqual(jei_record, modrecord.test_form().__repr__())
 
 	# a basic check to make sure the curseforge url is the same
 	def test_listing_url_specific(self):
@@ -41,10 +42,10 @@ class TestParse(unittest.TestCase):
 
 	# check the download function works
 	def test_download(self):
-		asynchronous.download_multiple(["https://www.google.com"])
+		download.download_multiple(["https://www.google.com"])
 
 	def test_download_exception(self):
-		self.assertEqual(asynchronous.download_multiple(["http://www.doesnt_exist.com/"]), [None])
+		self.assertEqual(download.download_multiple(["http://www.doesnt_exist.com/"]), [None])
 
 	# check the parsing works for a saved html page
 	def test_number_pages_specific(self):
@@ -54,7 +55,7 @@ class TestParse(unittest.TestCase):
 
 	def test_number_pages_general(self):
 		url = utils.get_listing_url()
-		maxpage = parse.get_number_pages(asynchronous.download(url))
+		maxpage = parse.get_number_pages(download.download(url))
 		self.assertTrue(maxpage > 10,
 		             "cannot parse number of pages correctly")  # 10 is a reasonable number for any version
 
@@ -69,5 +70,3 @@ class TestParse(unittest.TestCase):
 		res = parse.fetch_and_get_project_links(url)
 		self.assertTrue(i is not None for i in res)
 		self.assertTrue(len(res) > 0)
-
-	# TODO - test links correct from page 1 that is saved.

@@ -12,7 +12,7 @@ CONFIG_FILE = relative_path("config.ini")
 
 class Config:
 	# In theory this could be a dict but setting/accessing things globally in python is rather messy
-	# better to follow OOP and encapsulate everything
+	# better to follow OOP and encapsulate as much as I can
 
 	def __init__(self):
 		self.values = {}

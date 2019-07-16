@@ -1,6 +1,12 @@
+import asyncio
+import logging
 import time
 
 # from python docs: https://docs.python.org/3.4/library/urllib.request.html#urllib.request.Request
+from typing import Optional, Iterable, List
+
+import aiohttp
+
 HEADERS = {
 	"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36"
 }
@@ -59,3 +65,58 @@ class ModRecord:
 	def as_tuple(self):  # TODO - perhaps there is a better way to do this, also maybe set accessed time?
 		return self._project_id, int(
 			time.time()), self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license
+
+
+# Old download code:
+# def download(url: str) -> bytes:
+# 	logging.debug("downloading: %s", url)
+# 	tries = 0
+# 	while tries < TRIES:
+# 		try:
+# 			with request.urlopen(request.Request(url, headers=HEADERS), timeout=TIMEOUT) as page:
+# 				try:
+# 					return page.read()
+# 				except Exception as e:
+# 					logging.warning(e.__repr__())
+# 		except urllib.error.HTTPError or socket.timeout as e:
+# 			logging.error(e.__repr__(), url)
+#
+# 		tries += 1
+# 	logging.error("page %s timed out too many times", url)
+# 	raise Exception("Page timed out too many times")
+
+
+# this logs errors on failure. I think this is related to https://bugs.python.org/issue37035
+async def fetch(session: aiohttp.ClientSession, url: str) -> Optional[bytes]:
+	try:
+		async with session.get(url) as response:
+			logging.debug("downloading: %s", url)
+			if response.status >= 400:
+				logging.error(f"bad response {response.status} for url {url}")
+				return None
+			return await response.read()
+	except Exception as e:
+		logging.error(f"error in performing download for {url}: {e.__repr__()}")
+		return None
+
+
+# type annotation weird due to https://github.com/python/typing/issues/446 I think
+# TODO - is it possible to add accept encoding gzip to improve download times?
+async def fetch_many(*args: str) -> 'Future[Tuple[bytes, ...]]':  # I think this is the correct type...
+	# TODO - maybe supply timeout and use multiple try approach in fetch as above (commented)
+	async with aiohttp.ClientSession(headers=HEADERS) as session:
+		tasks = [fetch(session, arg) for arg in args]
+
+		return await asyncio.gather(*tasks)
+
+
+def download_multiple(urls: Iterable[str]) -> List[Optional[bytes]]:
+	task = fetch_many(*urls)
+	return asyncio.run(task)
+
+
+def download(url: str) -> Optional[bytes]:
+	lst = download_multiple([url])
+	if len(lst) != 1:
+		raise
+	return lst[0]

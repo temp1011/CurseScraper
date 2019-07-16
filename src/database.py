@@ -45,5 +45,6 @@ class DB:
 		license)
 		VALUES (?, ?, ?, ?, ?, ?, ?)""", mod_record.as_tuple())
 
+	# TODO - use last updated value on curseforge?
 	def get_cache_info(self, name_link):
 		return self.cur.execute("SELECT id, accessed FROM mods WHERE link_extension=? LIMIT 1", (name_link,)).fetchone()

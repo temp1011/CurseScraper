@@ -1,10 +1,7 @@
 import concurrent.futures
-import logging
 from logging import handlers
 import sys
-from typing import List
 
-from asynchronous import download, download_multiple
 import database
 from download import *
 from parse import get_number_pages, get_project_links, needs_refresh, scrape_result

@@ -5,10 +5,9 @@ from typing import Optional, Set
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
-from asynchronous import download
 from configuration import CONFIG
 from database import DB
-from download import ModRecord
+from download import ModRecord, download
 from utils import get_content_url
 
 
