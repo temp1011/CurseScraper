@@ -70,3 +70,5 @@ class TestParse(unittest.TestCase):
 		print(res)
 		self.assertTrue(i is not None for i in res)
 		self.assertTrue(len(res) > 0)
+
+	# TODO - test for page erroring and check None handled correctly

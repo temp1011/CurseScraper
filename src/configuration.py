@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 
 
+# TODO - this is duplicated with function in tests I think. Should move to a util file maybe
 def absolute_path(relative_path):
 	return os.path.dirname(os.path.abspath(__file__)) + "/" + relative_path
 
@@ -13,8 +14,8 @@ CONFIG_FILE = absolute_path("../config.ini")
 
 
 class Config:
-# In theory this could be a dict but setting/accessing things globally in python is rather messy
-# better to follow OOP and encapsulate everything
+	# In theory this could be a dict but setting/accessing things globally in python is rather messy
+	# better to follow OOP and encapsulate everything
 
 	def __init__(self):
 		self.values = {}
@@ -22,6 +23,9 @@ class Config:
 			self.read_config()
 			return
 		config = configparser.ConfigParser(allow_no_value=True)
+		# TODO - now that we use asynchronous downloads default these to the number of cpus available on the system
+		# and only have a parsing thread count, but include a semaphore for the async stuff to avoid overloading
+		# the server
 		config["processes"] = {
 			"finding content": 10,
 			"updating content": 10

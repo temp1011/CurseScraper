@@ -3,9 +3,10 @@ import sys
 from logging import handlers
 from typing import List
 
+import asynchronous
 import database
 from download import *
-from parse import get_number_pages, get_project_links, needs_refresh, fetch_and_scrape, fetch_and_get_project_links
+from parse import get_number_pages, get_project_links, needs_refresh, scrape_result
 
 
 def main():
@@ -31,11 +32,12 @@ def main():
 def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 	ret = []
 	number_pages = get_number_pages(download(get_listing_url()))
+	pages_html = asynchronous.run({get_listing_url(GAME_VERSION, i) for i in range(1, number_pages+1)})
+
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:
 		project_ids = {
-			executor.submit(fetch_and_get_project_links,
-			                get_listing_url(GAME_VERSION, i)):
-				i for i in range(1, number_pages + 1)
+			executor.submit(get_project_links, p): p
+			for p in pages_html if p is not None
 		}
 		for future in concurrent.futures.as_completed(project_ids):
 			ret.extend(future.result())
@@ -44,8 +46,12 @@ def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 
 def scrape_results(exts: List[str], number_parser_processes: int) -> List[ModRecord]:
 	ret = []
+
+	# TODO - memory usage of this. Probably want more queues now that things flow better
+	# Also needs to handle download errors...
+	mod_pages_html = asynchronous.run({get_content_url(ext) for ext in exts})
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_parser_processes) as executor:
-		pages = {executor.submit(fetch_and_scrape, i): i for i in exts}
+		pages = {executor.submit(scrape_result, p): p for p in mod_pages_html if p is not None}
 		for future in concurrent.futures.as_completed(pages):
 			f = future.result()
 			if f is not None:
@@ -63,7 +69,7 @@ def setup_logging():
 		level=getattr(logging, CONFIG.get("log_level").upper(), None),
 		handlers=loghandlers
 	)
-	logging.debug("Initialised!")
+	logging.debug("Logging Initialised!")
 
 
 if __name__ == "__main__":

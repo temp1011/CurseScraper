@@ -1,3 +1,4 @@
+import socket
 import time
 import urllib
 from urllib import request, parse, error
@@ -34,7 +35,7 @@ def download(url: str) -> bytes:
 					return page.read()
 				except Exception as e:
 					logging.warning(e.__repr__())
-		except urllib.error.HTTPError as e:
+		except urllib.error.HTTPError or socket.timeout as e:
 			logging.error(e.__repr__(), url)
 
 		tries += 1
@@ -90,8 +91,9 @@ class ModRecord:
 	def get_project_id(self):
 		return self._project_id
 
-	def test_form(self):    # don't use accessed time for test cases
+	def test_form(self):  # don't use accessed time for test cases
 		return self._project_id, self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license
 
-	def as_tuple(self): # TODO - perhaps there is a better way to do this, also maybe set accessed time?
-		return self._project_id, int(time.time()), self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license
+	def as_tuple(self):  # TODO - perhaps there is a better way to do this, also maybe set accessed time?
+		return self._project_id, int(
+			time.time()), self._name_link, self._source_link, self._issues_link, self._wiki_link, self._license

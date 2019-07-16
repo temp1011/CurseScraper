@@ -61,14 +61,17 @@ def fetch_and_scrape(ext: str) -> Optional[ModRecord]:
 		return None
 
 	record = scrape_result(raw_bytes)
-	record.set_name_link(ext)
 	return record
 
 
-def scrape_result(raw_bytes: bytes) -> ModRecord:
+def scrape_result(raw_bytes: bytes) -> Optional[ModRecord]:
 	raw_content = BeautifulSoup(raw_bytes, "lxml")
 	ret = ModRecord()
-	link_bar = raw_content.find("nav", class_="container mx-auto").ul
+	link_bar_outer = raw_content.find("nav", class_="container mx-auto")
+	if link_bar_outer is None:  # Seems to be due to internal server error
+		logging.error(f"the html was incorrect: {raw_content}")
+		return None
+	link_bar = link_bar_outer.ul
 	for li in link_bar.children:
 		if isinstance(li, NavigableString):
 			continue
@@ -80,6 +83,8 @@ def scrape_result(raw_bytes: bytes) -> ModRecord:
 			ret.set_wiki_link(link)
 		elif "issues" in s:
 			ret.set_issues_link(link)
+		elif "description" in s:
+			ret.set_name_link(link)
 		else:
 			pass
 
@@ -104,4 +109,5 @@ def scrape_result(raw_bytes: bytes) -> ModRecord:
 						ret.set_project_id(int(child.string))
 					if "License" in key.strip():
 						ret.set_license(child.string.strip())
+
 	return ret
