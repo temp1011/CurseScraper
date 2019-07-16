@@ -1,13 +1,8 @@
-import os
 import unittest
 
 import download
 import parse
-
-
-def relative_path(p: str) -> str:
-	dirname = os.path.dirname(__file__)
-	return os.path.join(dirname, p)
+from utils import relative_path
 
 
 def url_exists(url: str) -> bool:

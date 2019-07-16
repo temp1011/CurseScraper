@@ -1,16 +1,16 @@
 import configparser
-import os
+import multiprocessing
 import socket
 from pathlib import Path
 import sys
 
 
 # TODO - this is duplicated with function in tests I think. Should move to a util file maybe
-def absolute_path(relative_path):
-	return os.path.dirname(os.path.abspath(__file__)) + "/" + relative_path
+# In fact, this version looks worse...
+from utils import relative_path
 
 
-CONFIG_FILE = absolute_path("../config.ini")
+CONFIG_FILE = relative_path("../config.ini")
 
 
 class Config:
@@ -27,8 +27,8 @@ class Config:
 		# and only have a parsing thread count, but include a semaphore for the async stuff to avoid overloading
 		# the server
 		config["processes"] = {
-			"finding content": 10,
-			"updating content": 10
+			"# 0 or less defaults to number of cpus on the system": None,
+			"parsing": -1
 		}
 
 		config["downloading"] = {
@@ -69,18 +69,18 @@ class Config:
 		config.read(CONFIG_FILE)
 
 		processes = config["processes"]
-		self.values["scanner_processes"] = int(processes["finding content"])
-		self.values["scraper_processes"] = int(processes["updating content"])
+		num_proc = int(processes["parsing"])
+		self.values["parser_processes"] = num_proc if num_proc > 0 else multiprocessing.cpu_count()
 
 		curseforge = config["curseforge"]
 		self.values["game_version"] = curseforge["game version"]
 
 		db = config["db"]
-		self.values["db_location"] = absolute_path(db["location"])
+		self.values["db_location"] = relative_path(db["location"])
 		self.values["cache_timeout"] = int(db["timeout"])
 
 		log = config["logging"]
-		self.values["log_location"] = absolute_path(log["location"])
+		self.values["log_location"] = relative_path(log["location"])
 		self.values["log_use_stdout"] = log["print to stdout"]
 		self.values["log_level"] = log["log level"]
 

@@ -37,6 +37,7 @@ async def fetch(session: aiohttp.ClientSession, url: str) -> Optional[bytes]:
 
 
 # type annotation weird due to https://github.com/python/typing/issues/446 I think
+# TODO - is it possible to add accept encoding gzip to improve download times?
 async def main(*args: str) -> 'Future[Tuple[bytes, ...]]':  # I think this is the correct type...
 	# TODO - supply timeout and use multiple try approach in fetch as above (commented)
 	async with aiohttp.ClientSession(headers=HEADERS) as session:

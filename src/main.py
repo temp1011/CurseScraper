@@ -14,12 +14,12 @@ def main():
 	start = time.time()
 
 	with database.DB() as db:
-		found_links = init_page_queue(CONFIG.get("scanner_processes"))
+		found_links = init_page_queue(CONFIG.get("parser_processes"))
 		found_links = list(filter(needs_refresh, found_links))
 		found_links = found_links[:CONFIG.get("max_search")]
 		logging.info("found {} mods to use".format(len(found_links)))
 
-		scraped_data = scrape_results(found_links, CONFIG.get("scraper_processes"))
+		scraped_data = scrape_results(found_links, CONFIG.get("parser_processes"))
 		if len(scraped_data) > 0:
 			logging.debug("everything scraped")
 		for mod_record in scraped_data:
