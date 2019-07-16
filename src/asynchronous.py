@@ -51,13 +51,13 @@ async def fetch_many(*args: str) -> 'Future[Tuple[bytes, ...]]':  # I think this
 		return await asyncio.gather(*tasks)
 
 
-def run(urls: Iterable[str]) -> List[Optional[bytes]]:
+def download_multiple(urls: Iterable[str]) -> List[Optional[bytes]]:
 	task = fetch_many(*urls)
 	return asyncio.run(task)
 
 
-def run_single(url: str) -> Optional[bytes]:
-	lst = run([url])
+def download(url: str) -> Optional[bytes]:
+	lst = download_multiple([url])
 	if len(lst) != 1:
 		raise
 	return lst[0]

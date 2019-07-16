@@ -4,7 +4,7 @@ from logging import handlers
 import sys
 from typing import List
 
-from asynchronous import run_single, run
+from asynchronous import download, download_multiple
 import database
 from download import *
 from parse import get_number_pages, get_project_links, needs_refresh, scrape_result
@@ -34,8 +34,8 @@ def main():
 
 def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 	ret = []
-	number_pages = get_number_pages(run_single(get_listing_url()))
-	pages_html = run({get_listing_url(GAME_VERSION, i) for i in range(1, number_pages+1)})
+	number_pages = get_number_pages(download(get_listing_url()))
+	pages_html = download_multiple({get_listing_url(GAME_VERSION, i) for i in range(1, number_pages + 1)})
 
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:
 		project_ids = {
@@ -52,7 +52,7 @@ def scrape_results(exts: List[str], number_parser_processes: int) -> List[ModRec
 
 	# TODO - memory usage of this. Probably want more queues now that things flow better
 	# Also needs to handle download errors...
-	mod_pages_html = run({get_content_url(ext) for ext in exts})
+	mod_pages_html = download_multiple({get_content_url(ext) for ext in exts})
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_parser_processes) as executor:
 		pages = {executor.submit(scrape_result, p): p for p in mod_pages_html if p is not None}
 		for future in concurrent.futures.as_completed(pages):

@@ -5,7 +5,7 @@ from typing import Optional, Set
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
 
-from asynchronous import run_single
+from asynchronous import download
 from configuration import CONFIG
 from database import DB
 from download import ModRecord
@@ -25,7 +25,7 @@ def get_number_pages(raw_bytes: bytes) -> int:
 
 def fetch_and_get_project_links(url: str) -> Set[str]:
 	logging.debug("page %s", url)
-	return get_project_links(run_single(url))
+	return get_project_links(download(url))
 
 
 def get_project_links(raw: bytes) -> Set[str]:
@@ -57,7 +57,7 @@ def needs_refresh(link: str) -> bool:
 def fetch_and_scrape(ext: str) -> Optional[ModRecord]:
 	url = get_content_url(ext)
 	try:  # seems to be due to https://www.curseforge.com/minecraft/mc-mods/lan-essentials causing timeouts
-		raw_bytes = run_single(url)
+		raw_bytes = download(url)
 	except Exception:
 		logging.error("extension {} could not be parsed due to download timeout".format(ext))
 		return None

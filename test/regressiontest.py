@@ -8,7 +8,7 @@ from utils import relative_path
 
 def url_exists(url: str) -> bool:
 	try:
-		res = asynchronous.run_single(url)
+		res = asynchronous.download(url)
 		return res is not None
 	except Exception:
 		return False
@@ -41,10 +41,10 @@ class TestParse(unittest.TestCase):
 
 	# check the download function works
 	def test_download(self):
-		asynchronous.run(["https://www.google.com"])
+		asynchronous.download_multiple(["https://www.google.com"])
 
 	def test_download_exception(self):
-		self.assertEqual(asynchronous.run(["http://www.doesnt_exist.com/"]), [None])
+		self.assertEqual(asynchronous.download_multiple(["http://www.doesnt_exist.com/"]), [None])
 
 	# check the parsing works for a saved html page
 	def test_number_pages_specific(self):
@@ -54,7 +54,7 @@ class TestParse(unittest.TestCase):
 
 	def test_number_pages_general(self):
 		url = utils.get_listing_url()
-		maxpage = parse.get_number_pages(asynchronous.run_single(url))
+		maxpage = parse.get_number_pages(asynchronous.download(url))
 		self.assertTrue(maxpage > 10,
 		             "cannot parse number of pages correctly")  # 10 is a reasonable number for any version
 
