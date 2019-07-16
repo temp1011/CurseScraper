@@ -10,13 +10,18 @@ from download import HEADERS
 
 # this logs errors on failure. I think this is related to https://bugs.python.org/issue37035
 async def fetch(session: aiohttp.ClientSession, url: str) -> Optional[bytes]:
-	# TODO - protect against ClientConnectionError
-	async with session.get(url) as response:
-		logging.debug("downloading: %s", url)
-		if response.status >= 400:
-			logging.error(f"bad response {response.status} for url {url}")
-			return None
-		return await response.read()
+	try:
+		# TODO - protect against ClientConnectionError
+		async with session.get(url) as response:
+			logging.debug("downloading: %s", url)
+			if response.status >= 400:
+				logging.error(f"bad response {response.status} for url {url}")
+				return None
+			return await response.read()
+	except Exception as e:
+		logging.error(f"error in performing download for {url}: {e.__repr__()}")
+		return None
+
 
 # def download(url: str) -> bytes:
 # 	logging.debug("downloading: %s", url)
@@ -38,7 +43,7 @@ async def fetch(session: aiohttp.ClientSession, url: str) -> Optional[bytes]:
 
 # type annotation weird due to https://github.com/python/typing/issues/446 I think
 # TODO - is it possible to add accept encoding gzip to improve download times?
-async def main(*args: str) -> 'Future[Tuple[bytes, ...]]':  # I think this is the correct type...
+async def fetch_many(*args: str) -> 'Future[Tuple[bytes, ...]]':  # I think this is the correct type...
 	# TODO - supply timeout and use multiple try approach in fetch as above (commented)
 	async with aiohttp.ClientSession(headers=HEADERS) as session:
 		tasks = [fetch(session, arg) for arg in args]
@@ -47,5 +52,12 @@ async def main(*args: str) -> 'Future[Tuple[bytes, ...]]':  # I think this is th
 
 
 def run(urls: Iterable[str]) -> List[Optional[bytes]]:
-	task = main(*urls)
+	task = fetch_many(*urls)
 	return asyncio.run(task)
+
+
+def run_single(url: str) -> Optional[bytes]:
+	lst = run([url])
+	if len(lst) != 1:
+		raise
+	return lst[0]

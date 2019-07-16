@@ -1,5 +1,6 @@
 import unittest
 
+import asynchronous
 import download
 import parse
 from utils import relative_path
@@ -7,7 +8,7 @@ from utils import relative_path
 
 def url_exists(url: str) -> bool:
 	try:
-		res = download.download(url)
+		res = asynchronous.run_single(url)
 		return res is not None
 	except Exception:
 		return False
@@ -24,7 +25,7 @@ class TestParse(unittest.TestCase):
 		self.assertEqual(238222, modrecord.get_project_id())    # pretty much the only thing I can guarantee
 
 	def test_mod_parse_specific(self):
-		with open(relative_path("resources/jei_page_20190715.html"), "rb") as f:
+		with open(relative_path("test/resources/jei_page_20190715.html"), "rb") as f:
 			modrecord = parse.fetch_and_scrape("/minecraft/mc-mods/jei")
 			self.assertEqual(self.jei_record, modrecord.test_form().__repr__())
 
@@ -40,23 +41,26 @@ class TestParse(unittest.TestCase):
 
 	# check the download function works
 	def test_download(self):
-		download.download("https://www.google.com")
+		asynchronous.run(["https://www.google.com"])
+
+	def test_download_exception(self):
+		self.assertEqual(asynchronous.run(["http://www.doesnt_exist.com/"]), [None])
 
 	# check the parsing works for a saved html page
 	def test_number_pages_specific(self):
-		with open(relative_path("resources/mod_listing_page_1_20190715.html"), "rb") as f:
+		with open(relative_path("test/resources/mod_listing_page_1_20190715.html"), "rb") as f:
 			maxpage = parse.get_number_pages(f.read())
 			self.assertEqual(maxpage, 279)
 
 	def test_number_pages_general(self):
 		url = download.get_listing_url()
-		maxpage = parse.get_number_pages(download.download(url))
+		maxpage = parse.get_number_pages(asynchronous.run_single(url))
 		self.assertTrue(maxpage > 10,
 		             "cannot parse number of pages correctly")  # 10 is a reasonable number for any version
 
 	def test_project_links_specific(self):
 		links = {'/minecraft/mc-mods/mouse-tweaks', '/minecraft/mc-mods/crafttweaker', '/minecraft/mc-mods/iron-chests', '/minecraft/mc-mods/inventory-tweaks', '/minecraft/mc-mods/resource-loader', '/minecraft/mc-mods/chisel', '/minecraft/mc-mods/codechicken-lib-1-8', '/minecraft/mc-mods/applied-energistics-2', '/minecraft/mc-mods/shadowfacts-forgelin', '/minecraft/mc-mods/baubles', '/minecraft/mc-mods/ctm', '/minecraft/mc-mods/appleskin', '/minecraft/mc-mods/jei', '/minecraft/mc-mods/modtweaker', '/minecraft/mc-mods/thermal-foundation', '/minecraft/mc-mods/tinkers-construct', '/minecraft/mc-mods/mantle', '/minecraft/mc-mods/cofh-core', '/minecraft/mc-mods/journeymap', '/minecraft/mc-mods/custom-main-menu'}
-		with open(relative_path("resources/mod_listing_page_1_20190715.html"), "rb") as f:
+		with open(relative_path("test/resources/mod_listing_page_1_20190715.html"), "rb") as f:
 			self.assertEqual(links, parse.get_project_links(f.read()))
 
 	def test_project_links_general(self):

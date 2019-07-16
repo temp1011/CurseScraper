@@ -25,22 +25,22 @@ def get_content_url(ext: str) -> str:
 	return CURSEFORGE_HOME + ext
 
 
-def download(url: str) -> bytes:
-	logging.debug("downloading: %s", url)
-	tries = 0
-	while tries < TRIES:
-		try:
-			with request.urlopen(request.Request(url, headers=HEADERS), timeout=TIMEOUT) as page:
-				try:
-					return page.read()
-				except Exception as e:
-					logging.warning(e.__repr__())
-		except urllib.error.HTTPError or socket.timeout as e:
-			logging.error(e.__repr__(), url)
-
-		tries += 1
-	logging.error("page %s timed out too many times", url)
-	raise Exception("Page timed out too many times")
+# def download(url: str) -> bytes:
+# 	logging.debug("downloading: %s", url)
+# 	tries = 0
+# 	while tries < TRIES:
+# 		try:
+# 			with request.urlopen(request.Request(url, headers=HEADERS), timeout=TIMEOUT) as page:
+# 				try:
+# 					return page.read()
+# 				except Exception as e:
+# 					logging.warning(e.__repr__())
+# 		except urllib.error.HTTPError or socket.timeout as e:
+# 			logging.error(e.__repr__(), url)
+#
+# 		tries += 1
+# 	logging.error("page %s timed out too many times", url)
+# 	raise Exception("Page timed out too many times")
 
 
 # could use tuple/dict here but this is safer (and not stringly typed!)

@@ -4,6 +4,7 @@ from logging import handlers
 from typing import List
 
 import asynchronous
+from asynchronous import run_single
 import database
 from download import *
 from parse import get_number_pages, get_project_links, needs_refresh, scrape_result
@@ -31,7 +32,7 @@ def main():
 
 def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 	ret = []
-	number_pages = get_number_pages(download(get_listing_url()))
+	number_pages = get_number_pages(run_single(get_listing_url()))
 	pages_html = asynchronous.run({get_listing_url(GAME_VERSION, i) for i in range(1, number_pages+1)})
 
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:
