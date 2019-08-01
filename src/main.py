@@ -7,6 +7,7 @@ from download import *
 from parse import get_number_pages, get_project_links, needs_refresh, scrape_result
 from utils import get_content_url, get_listing_url
 from configuration import GAME_VERSION, CONFIG
+from random import shuffle
 
 
 def main():
@@ -17,6 +18,7 @@ def main():
 		found_links = init_page_queue(CONFIG.get("parser_processes"))
 		found_links = list(filter(needs_refresh, found_links))
 		found_links = found_links[:CONFIG.get("max_search")]
+		shuffle(found_links)
 		logging.info("found {} mods to use".format(len(found_links)))
 
 		scraped_data = scrape_results(found_links, CONFIG.get("parser_processes"))
@@ -32,7 +34,9 @@ def main():
 def init_page_queue(number_downloader_threads: int = 1) -> List[str]:
 	ret = []
 	number_pages = get_number_pages(download(get_listing_url()))
-	pages_html = download_multiple({get_listing_url(GAME_VERSION, i) for i in range(1, number_pages + 1)})
+	page_numbers = [i for i in range(1, number_pages + 1)]
+	shuffle(page_numbers)
+	pages_html = download_multiple({get_listing_url(GAME_VERSION, i) for i in page_numbers})
 
 	with concurrent.futures.ProcessPoolExecutor(max_workers=number_downloader_threads) as executor:
 		project_ids = {
